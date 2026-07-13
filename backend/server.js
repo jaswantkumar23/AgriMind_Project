@@ -12,8 +12,8 @@ app.use(express.json());
 // connecting to mongodb database
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("🚀 Mubarak ho! MongoDB Atlas se connection ho gaya"))
-  .catch((err) => console.log("❌ DB Connection Error:", err));
+  .then(() => console.log("MongoDB connected Successsfully"))
+  .catch((err) => console.log("MongoDB connection error",err));
 
 // making db schema to save history
 const soilTestSchema = new mongoose.Schema({
