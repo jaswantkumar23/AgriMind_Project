@@ -11,7 +11,7 @@ const tDict = {
     field_interview: "Field Interview", back: "Back",
     tap_speak: "Tap to Speak", listening: "Listening...",
     last_crop: "Last Crop Harvested?", rest_duration: "Time Since Last Crop?", plant_next: "What will you plant next?",
-    generating: "AI is Thinking...", gen_prescription: "Generate Prescription",
+    generating: "AgriMind is Thinking...", gen_prescription: "Generate Prescription",
     ai_decision: "AI Decision", expert_alt: "Expert Alternatives",
     new_test: "New Test", save_db: "Save to DB", saving: "Saving...",
     upload_photo: "Take Photo (Camera)", analyze_disease: "Analyze Disease", scanning: "AI is Scanning...",
@@ -20,7 +20,9 @@ const tDict = {
     nitrogen: "Nitrogen", phosphorus: "Phosphorus", potassium: "Potassium", ph: "pH Level", moisture: "Moisture Content",
     camera_instruction: "Take photos of the diseased crop or leaves.",
     no_history: "No historical data found. Save some reports first!",
-    recent_tests: "Recent Tests", see_more: "See Details", see_less: "Hide Details"
+    recent_tests: "Recent Tests", see_more: "See Details", see_less: "Hide Details",
+    pre_sowing: "Pre-Sowing (New Crop)", growth_phase: "Growth Phase (Existing Crop)",
+    current_crop: "Current Growing Crop", crop_stage: "Crop Stage / Age"
   },
   ur: {
     soil_ai: "مٹی کی جانچ", crop_doctor: "فصل کا ڈاکٹر", dashboard: "ڈیش بورڈ",
@@ -29,7 +31,7 @@ const tDict = {
     field_interview: "کھیت کا انٹرویو", back: "واپس",
     tap_speak: "بولنے کے لیے دبائیں", listening: "سن رہا ہے...",
     last_crop: "پچھلی فصل کونسی تھی؟", rest_duration: "پچھلی فصل کو کتنا وقت ہو گیا؟", plant_next: "اگلی فصل کونسی لگانی ہے؟",
-    generating: "سوچ رہا ہے...", gen_prescription: "تجویز حاصل کریں",
+    generating: "ایگری مائنڈ سوچ رہا ہے...", gen_prescription: "تجویز حاصل کریں",
     ai_decision: "حتمی فیصلہ", expert_alt: "متبادل فصلیں",
     new_test: "نیا ٹیسٹ", save_db: "محفوظ کریں", saving: "محفوظ ہو رہا ہے...",
     upload_photo: "تصویر لیں (کیمرہ)", analyze_disease: "بیماری چیک کریں", scanning: "چیک کر رہا ہے...",
@@ -38,7 +40,9 @@ const tDict = {
     nitrogen: "نائٹروجن", phosphorus: "فاسفورس", potassium: "پوٹاشیم", ph: "پی ایچ (pH)", moisture: "نمی",
     camera_instruction: "بیمار فصل یا پتوں کی تصویر کھینچیں۔",
     no_history: "کوئی پرانا ریکارڈ نہیں ملا۔",
-    recent_tests: "حالیہ ٹیسٹ", see_more: "مزید تفصیل دیکھیں", see_less: "تفصیل چھپائیں"
+    recent_tests: "حالیہ ٹیسٹ", see_more: "مزید تفصیل دیکھیں", see_less: "تفصیل چھپائیں",
+    pre_sowing: "نئی فصل لگانی ہے", growth_phase: "فصل لگی ہوئی ہے",
+    current_crop: "موجودہ فصل", crop_stage: "فصل کی عمر / سٹیج"
   },
   sd: {
     soil_ai: "مٽي جي جانچ", crop_doctor: "فصل جو ڊاڪٽر", dashboard: "ڊيش بورڊ",
@@ -47,7 +51,7 @@ const tDict = {
     field_interview: "ٻني جو انٽرويو", back: "واپس",
     tap_speak: "ڳالهائڻ لاءِ دٻايو", listening: "ٻڌي رهيو آهي...",
     last_crop: "پويون فصل ڪهڙو هو؟", rest_duration: "پويون فصل ڪڏهن لٿو؟", plant_next: "اڳيون فصل ڪهڙو لڳائڻو آهي؟",
-    generating: "سوچي رهيو آهي...", gen_prescription: "تجويز حاصل ڪريو",
+    generating: "ايگري مائينڊ سوچي رهيو آهي...", gen_prescription: "تجويز حاصل ڪريو",
     ai_decision: "حتمي فيصلو", expert_alt: "متبادل فصل",
     new_test: "نئون ٽيسٽ", save_db: "محفوظ ڪريو", saving: "محفوظ ٿي رهيو آهي...",
     upload_photo: "تصوير وٺو (ڪئميرا)", analyze_disease: "بيماري چيڪ ڪريو", scanning: "چيڪ ڪري رهيو آهي...",
@@ -56,18 +60,43 @@ const tDict = {
     nitrogen: "نائٹروجن", phosphorus: "فاسفورس", potassium: "پوٽاشيم", ph: "پي ايچ (pH)", moisture: "نمي",
     camera_instruction: "بيمار فصل يا پنن جي تصوير وٺو.",
     no_history: "ڪو به پراڻو رڪارڊ نه مليو.",
-    recent_tests: "تازو ٽيسٽ", see_more: "وڌيڪ تفصيل ڏسو", see_less: "تفصيل لڪايو"
+    recent_tests: "تازو ٽيسٽ", see_more: "وڌيڪ تفصيل ڏسو", see_less: "تفصيل لڪايو",
+    pre_sowing: "نئون فصل لڳائڻو آهي", growth_phase: "فصل لڳل آهي",
+    current_crop: "موجوده فصل", crop_stage: "فصل جي عمر / اسٽيج"
+  }
+};
+
+const cropDict = {
+  en: {
+    "Cotton": "Cotton", "Wheat": "Wheat", "Sugarcane": "Sugarcane", "Mango": "Mango", "Banana": "Banana",
+    "Chilli": "Chilli", "Rice": "Rice", "Tomato": "Tomato", "Onion": "Onion", "Guava": "Guava",
+    "Bajra": "Bajra", "Guar": "Guar", "Moth bean": "Moth bean", "Sunflower": "Sunflower", "Jowar": "Jowar",
+    "Dates": "Dates", "Desert grasses": "Desert grasses", "None": "None"
+  },
+  ur: {
+    "Cotton": "کپاس", "Wheat": "گندم", "Sugarcane": "گنا", "Mango": "آم", "Banana": "کیلا",
+    "Chilli": "مرچ", "Rice": "چاول", "Tomato": "ٹماٹر", "Onion": "پیاز", "Guava": "امرود",
+    "Bajra": "باجرہ", "Guar": "گوار", "Moth bean": "موٹھ", "Sunflower": "سورج مکھی", "Jowar": "جوار",
+    "Dates": "کھجور", "Desert grasses": "صحرائی گھاس", "None": "کوئی نہیں"
+  },
+  sd: {
+    "Cotton": "ڦٽي", "Wheat": "ڪڻڪ", "Sugarcane": "ڪماند", "Mango": "انب", "Banana": "ڪيلو",
+    "Chilli": "مرچ", "Rice": "چانور", "Tomato": "ٽماٽو", "Onion": "بصر", "Guava": "زيتون",
+    "Bajra": "ٻاجھري", "Guar": "گوار", "Moth bean": "مُوٺ", "Sunflower": "سورج مکي", "Jowar": "جوئر",
+    "Dates": "کجور", "Desert grasses": "صحرا جو گاهه", "None": "ڪو به نه"
   }
 };
 
 const initialFormData = {
   nitrogen: "", phosphorus: "", potassium: "", ph: "", moisture: "", location: "", soilSource: "Mirpur Khas",
-  prevCrop: "None", restDuration: "1 to 3 Weeks (1 se 3 Hafte)", plannedCrop: "Cotton", lat: null, lng: null
+  prevCrop: "None", restDuration: "1 to 3 Weeks (1 se 3 Hafte)", plannedCrop: "Cotton", 
+  testingPhase: "Pre-Sowing", stage: "Vegetative", lat: null, lng: null
 };
 
 function App() {
   const [lang, setLang] = useState('en');
   const t = (key) => tDict[lang][key] || key;
+  const tCrop = (crop) => cropDict[lang][crop] || crop;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
@@ -307,27 +336,34 @@ function App() {
     } catch (e) { console.error("Failed to fetch history"); }
   };
 
+  const fontStyle = lang === 'ur' 
+    ? { fontFamily: "'Noto Nastaliq Urdu', serif", lineHeight: '2.5' }
+    : lang === 'sd'
+    ? { fontFamily: "'Noto Sans Arabic', sans-serif", lineHeight: '2.2' }
+    : {};
+
   return (
-    <div className={`min-h-screen bg-slate-50 pb-10 font-sans ${lang === 'ur' || lang === 'sd' ? 'dir-rtl' : ''}`}>
+    <div style={fontStyle} className={`min-h-screen bg-slate-50 pb-10 font-sans ${lang === 'ur' || lang === 'sd' ? 'dir-rtl text-gray-900' : 'text-gray-800'}`}>
       {/* Header */}
-      <nav className="bg-agri-green p-4 text-white shadow-lg mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <nav dir="ltr" className="bg-agri-green p-4 text-white shadow-lg mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-black flex items-center gap-2 cursor-pointer" onClick={() => handleTabChange('soil')}>
           <Sprout /> AgriMind
         </h1>
-        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-auto justify-between gap-1 items-center">
+        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-auto h-12 items-stretch gap-1">
           <button 
             onClick={() => setLang(l => l === 'en' ? 'ur' : l === 'ur' ? 'sd' : 'en')} 
-            className="p-2 px-3 bg-black/20 text-white hover:bg-black/30 rounded-full font-bold flex gap-1 items-center transition-all"
+            className="px-4 bg-black/20 text-white hover:bg-black/30 rounded-full font-bold flex gap-2 items-center justify-center transition-all h-full"
+            style={{ fontFamily: "system-ui, -apple-system, sans-serif", lineHeight: "1" }}
           >
-            <Globe size={18}/> {lang.toUpperCase()}
+            <Globe size={18}/> <span>{lang.toUpperCase()}</span>
           </button>
-          <button onClick={() => handleTabChange('soil')} className={`flex-1 flex justify-center items-center py-2 px-2 rounded-full font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'soil' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('soil')} className={`flex-1 flex justify-center items-center px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'soil' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             {t('soil_ai')}
           </button>
-          <button onClick={() => handleTabChange('doctor')} className={`flex-1 flex justify-center items-center gap-1 py-2 px-2 rounded-full font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'doctor' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('doctor')} className={`flex-1 flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'doctor' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <Camera size={16}/> {t('crop_doctor')}
           </button>
-          <button onClick={() => handleTabChange('dashboard')} className={`flex-1 flex justify-center items-center gap-1 py-2 px-2 rounded-full font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('dashboard')} className={`flex-1 flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'dashboard' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <History size={16}/> {t('dashboard')}
           </button>
         </div>
@@ -442,35 +478,77 @@ function App() {
                    const plantCrops = availCrops.filter(c => c !== "None");
                    
                    const restDurationOptions = [
-                     "Currently Growing (Fasal Lagi Hai)",
                      "1 to 3 Weeks (1 se 3 Hafte)",
                      "4 to 8 Weeks (1 se 2 Mahinay)",
                      "3 to 5 Months (3 se 5 Mahinay)",
                      "6+ Months / Barren (6 Mahinay se Zyada / Banjar)"
                    ];
+                   
+                   const stageOptions = [
+                     "Seedling (Poda)",
+                     "Vegetative (Bara ho raha hai)",
+                     "Flowering (Phool lag rahe hain)",
+                     "Fruiting (Phal lag raha hai)",
+                     "Maturity (Pakk gaya hai)"
+                   ];
 
                    return (
                      <div className="space-y-4 mb-6">
-                       <div className="flex flex-col">
-                         <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('last_crop')}</label>
-                         <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.prevCrop} onChange={(e)=>setFormData({...formData, prevCrop: e.target.value})}>
-                           {availCrops.map(c => <option key={c} value={c}>{c}</option>)}
-                         </select>
+                       <div className="flex bg-green-50/50 p-1.5 rounded-full mb-6 border border-green-100 shadow-inner">
+                         <button 
+                           onClick={() => setFormData({...formData, testingPhase: "Pre-Sowing"})} 
+                           className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Pre-Sowing" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
+                         >
+                           {t('pre_sowing')}
+                         </button>
+                         <button 
+                           onClick={() => setFormData({...formData, testingPhase: "Growth"})} 
+                           className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Growth" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
+                         >
+                           {t('growth_phase')}
+                         </button>
                        </div>
+                       
+                       {formData.testingPhase === "Pre-Sowing" ? (
+                         <>
+                           <div className="flex flex-col">
+                             <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('last_crop')}</label>
+                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.prevCrop} onChange={(e)=>setFormData({...formData, prevCrop: e.target.value})}>
+                               {availCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
+                             </select>
+                           </div>
 
-                       <div className="flex flex-col">
-                         <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('rest_duration')}</label>
-                         <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.restDuration} onChange={(e)=>setFormData({...formData, restDuration: e.target.value})}>
-                           {restDurationOptions.map(r => <option key={r} value={r}>{r}</option>)}
-                         </select>
-                       </div>
+                           <div className="flex flex-col">
+                             <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('rest_duration')}</label>
+                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.restDuration} onChange={(e)=>setFormData({...formData, restDuration: e.target.value})}>
+                               {restDurationOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                             </select>
+                           </div>
 
-                       <div className="flex flex-col p-4 bg-green-50 rounded-2xl border border-green-100">
-                         <label className="text-sm font-bold text-agri-green mb-1">{t('plant_next')}</label>
-                         <select dir="ltr" className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
-                           {plantCrops.map(c => <option key={c} value={c}>{c}</option>)}
-                         </select>
-                       </div>
+                           <div className="flex flex-col p-4 bg-green-50 rounded-2xl border border-green-100">
+                             <label className="text-sm font-bold text-agri-green mb-1">{t('plant_next')}</label>
+                             <select dir="ltr" className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
+                               {plantCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
+                             </select>
+                           </div>
+                         </>
+                       ) : (
+                         <>
+                           <div className="flex flex-col p-4 bg-green-50 rounded-2xl border border-green-100 mb-4">
+                             <label className="text-sm font-bold text-agri-green mb-1">{t('current_crop')}</label>
+                             <select dir="ltr" className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
+                               {plantCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
+                             </select>
+                           </div>
+
+                           <div className="flex flex-col">
+                             <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('crop_stage')}</label>
+                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.stage} onChange={(e)=>setFormData({...formData, stage: e.target.value})}>
+                               {stageOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                             </select>
+                           </div>
+                         </>
+                       )}
                      </div>
                    );
                  })()}
@@ -516,7 +594,7 @@ function App() {
                     </div>
                   </div>
                   
-                  <p dir="rtl" className="text-lg font-medium leading-relaxed border-r-4 border-white/30 pr-4 py-2 mb-4 bg-black/5 rounded-l-lg">
+                  <p dir="rtl" className={`font-medium border-r-4 border-white/30 pr-4 py-2 mb-4 bg-black/5 rounded-l-lg ${lang === 'ur' || lang === 'sd' ? 'text-base leading-[3.5rem]' : 'text-lg leading-relaxed'}`}>
                     "{report.diagnosisText}"
                   </p>
                   <div className="bg-black/10 p-3 rounded-xl inline-flex items-center gap-2">
@@ -542,7 +620,7 @@ function App() {
                     </div>
                     {expandedAlt === i && (
                       <div className="mt-4 pt-4 border-t border-gray-100 animate-in slide-in-from-top-2">
-                        <p className="text-gray-700 font-medium leading-relaxed text-sm" dir={lang === 'ur' || lang === 'sd' ? 'rtl' : 'ltr'}>{c.why}</p>
+                        <p className={`text-gray-700 font-medium ${lang === 'ur' || lang === 'sd' ? 'text-sm leading-[2.8rem]' : 'text-sm leading-relaxed'}`} dir={lang === 'ur' || lang === 'sd' ? 'rtl' : 'ltr'}>{c.why}</p>
                       </div>
                     )}
                   </div>

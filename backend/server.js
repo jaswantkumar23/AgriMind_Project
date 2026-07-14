@@ -73,19 +73,24 @@ const runMLModel = (inputData) => {
 
 // main brain of the app using AI and ML
 const generateAIDiagnosis = async (data) => {
-  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang } = data;
+  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang, testingPhase } = data;
 
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set in backend .env");
   }
-  // calling weather api for live data
+  // calling weather api for live data based on soilSource
   let weatherContext = "Weather data unavailable.";
+  let wLat = 25.396; let wLng = 68.3578; // Default Mirpur Khas roughly
+  if (soilSource === "Mirpur Khas") { wLat = 25.5251; wLng = 69.0159; }
+  else if (soilSource === "Umerkot") { wLat = 25.3615; wLng = 69.7362; }
+  else if (soilSource === "Tharparkar") { wLat = 24.7977; wLng = 69.8058; }
+  
   try {
-    const weatherRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=25.396&longitude=68.3578&current_weather=true");
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${wLat}&longitude=${wLng}&current_weather=true`);
     const weatherData = await weatherRes.json();
     if (weatherData && weatherData.current_weather) {
       const { temperature, windspeed } = weatherData.current_weather;
-      weatherContext = `Current Temperature: ${temperature}°C, Wind Speed: ${windspeed} km/h`;
+      weatherContext = `Current Temperature in ${soilSource}: ${temperature}°C, Wind Speed: ${windspeed} km/h`;
     }
   } catch (err) {
     console.error("Weather fetch error:", err);
@@ -93,7 +98,8 @@ const generateAIDiagnosis = async (data) => {
 
   // calling python for prediction
   let mlPredictionText = "";
-  let situation = restDuration && restDuration.includes("Currently Growing") ? "Growth" : "Pre-Sowing";
+  let mlAlternativesText = "";
+  let situation = testingPhase || "Pre-Sowing";
   
   try {
     const mlInput = {
@@ -110,9 +116,12 @@ const generateAIDiagnosis = async (data) => {
     console.log("🤖 ML Result:", mlResult);
     
     if (mlResult.type === "crop_recommendation") {
-      mlPredictionText = `The AgriMind Assistant specifically recommends planting: ${mlResult.prediction}. Make sure to include this in your diagnosis and say "AgriMind Assistant ne mashwara diya hai"!`;
+      mlPredictionText = `The AgriMind ML Model mathematically predicts the #1 best crop is: ${mlResult.prediction}. Make sure to strongly recommend this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
+      if (mlResult.alternatives && mlResult.alternatives.length > 0) {
+        mlAlternativesText = `CRITICAL: The ML model strictly selected these alternative crops based on probability: ${mlResult.alternatives.join(", ")}. You MUST ONLY use these exact crops in the 'alternatives' array and explain why they match the current NPK perfectly.`;
+      }
     } else {
-      mlPredictionText = `The AgriMind Assistant specifically recommends this fertilizer action: ${mlResult.prediction}. Make sure to strongly advise the farmer to do this and say "AgriMind Assistant ne mashwara diya hai"!`;
+      mlPredictionText = `The AgriMind ML Model specifically recommends this fertilizer action: ${mlResult.prediction}. Make sure to strongly advise the farmer to do this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
     }
   } catch (err) {
     console.error("ML Model failed, relying only on Gemini:", err.message);
@@ -154,7 +163,7 @@ const generateAIDiagnosis = async (data) => {
     1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${soilSource || "Mirpur Khas"}. Then compare the live probe data against the standard ideal requirements for the farmer's "Planned Crop" (${plannedCrop}) in that district. Explicitly mention the numbers. For example: "Achi Chilli ke liye N 80mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
     2. SECOND (AgriMind ML Insight): Gently introduce the "CRITICAL AGRIMIND ASSISTANT INSIGHT" (${mlPredictionText}). Present this as a highly recommended expert option.
     
-    CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values and suggest crops that naturally thrive perfectly in these exact soil conditions without needing much extra fertilizer. Put the AgriMind Assistant's recommended crop here too if it fits.
+    ${mlAlternativesText || 'CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values and suggest crops that naturally thrive perfectly in these exact soil conditions without needing much extra fertilizer.'}
     
     Respond STRICTLY in JSON format matching this schema exactly (no markdown blocks around it):
     {
