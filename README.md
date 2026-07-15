@@ -278,7 +278,7 @@ npm start
 You should see:
 ```
 📡 Server is running on port: 5000
-🚀 Mubarak ho! MongoDB Atlas se connection ho gaya
+MongoDB connected Successsfully
 ```
 
 ### Terminal 2 — Start the Frontend
