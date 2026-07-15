@@ -139,9 +139,9 @@ function App() {
 
   const districtOptions = ["Mirpur Khas", "Umerkot", "Tharparkar"];
   const districtCities = {
-    "Mirpur Khas": ["Mirpur Khas", "Digri", "Kot Ghulam Muhammad", "Sindhri", "Shujabad", "Jhuddo", "Naukot", "Tando Jan Muhammad", "Hussain Bakhsh Mari"],
-    "Umerkot":     ["Umerkot", "Kunri", "Samaro", "Pithoro"],
-    "Tharparkar":  ["Mithi", "Diplo", "Islamkot", "Chachro", "Dahli", "Nagarparkar", "Kaloi"]
+    "Mirpur Khas": ["Digri", "Hussain Bakhsh Mari", "Jhuddo", "Kot Ghulam Muhammad", "Mirpur Khas", "Naukot", "Shujabad", "Sindhri", "Tando Jan Muhammad"],
+    "Umerkot":     ["Kunri", "Pithoro", "Samaro", "Umerkot"],
+    "Tharparkar":  ["Chachro", "Dahli", "Diplo", "Islamkot", "Kaloi", "Mithi", "Nagarparkar"]
   };
 
   useEffect(() => {
@@ -354,10 +354,10 @@ function App() {
     <div style={fontStyle} className={`min-h-screen bg-slate-50 pb-10 font-sans ${lang === 'ur' || lang === 'sd' ? 'dir-rtl text-gray-900' : 'text-gray-800'}`}>
       {/* Header */}
       <nav dir="ltr" className="bg-agri-green p-4 text-white shadow-lg mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-2xl font-black flex items-center gap-2 cursor-pointer" onClick={() => handleTabChange('soil')}>
+        <h1 className="text-2xl font-black flex items-center gap-2 cursor-pointer" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}} onClick={() => handleTabChange('soil')}>
           <Sprout /> AgriMind
         </h1>
-        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-auto h-12 items-stretch gap-1">
+        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-[540px] max-w-full h-12 items-stretch gap-1">
           <button 
             onClick={() => setLang(l => l === 'en' ? 'ur' : l === 'ur' ? 'sd' : 'en')} 
             className="px-4 bg-black/20 text-white hover:bg-black/30 rounded-full font-bold flex gap-2 items-center justify-center transition-all h-full"
@@ -365,13 +365,13 @@ function App() {
           >
             <Globe size={18}/> <span>{lang.toUpperCase()}</span>
           </button>
-          <button onClick={() => handleTabChange('soil')} className={`flex-1 flex justify-center items-center px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'soil' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('soil')} className={`flex-1 min-w-[100px] flex justify-center items-center px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'soil' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             {t('soil_ai')}
           </button>
-          <button onClick={() => handleTabChange('doctor')} className={`flex-1 flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'doctor' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('doctor')} className={`flex-1 min-w-[125px] flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'doctor' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <Camera size={16}/> {t('crop_doctor')}
           </button>
-          <button onClick={() => handleTabChange('dashboard')} className={`flex-1 flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'dashboard' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+          <button onClick={() => handleTabChange('dashboard')} className={`flex-1 min-w-[110px] flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'dashboard' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <History size={16}/> {t('dashboard')}
           </button>
         </div>
@@ -418,7 +418,7 @@ function App() {
                       value={formData.soilSource} 
                       onChange={e => setFormData({...formData, soilSource: e.target.value, soilCity: districtCities[e.target.value][0]})}
                       className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
-                      dir="ltr"
+                      dir={lang === 'en' ? 'ltr' : 'rtl'}
                     >
                       {districtOptions.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
@@ -426,7 +426,7 @@ function App() {
                       value={formData.soilCity} 
                       onChange={e => setFormData({...formData, soilCity: e.target.value})}
                       className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
-                      dir="ltr"
+                      dir={lang === 'en' ? 'ltr' : 'rtl'}
                     >
                       {districtCities[formData.soilSource].map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -494,18 +494,18 @@ function App() {
                    const plantCrops = availCrops.filter(c => c !== "None");
                    
                    const restDurationOptions = [
-                     "1 to 3 Weeks (1 se 3 Hafte)",
-                     "4 to 8 Weeks (1 se 2 Mahinay)",
-                     "3 to 5 Months (3 se 5 Mahinay)",
-                     "6+ Months / Barren (6 Mahinay se Zyada / Banjar)"
+                     { val: "1 to 3 Weeks (1 se 3 Hafte)", en: "1 to 3 Weeks", ur: "1 سے 3 ہفتے", sd: "1 کان 3 هفتا" },
+                     { val: "4 to 8 Weeks (1 se 2 Mahinay)", en: "4 to 8 Weeks", ur: "4 سے 8 ہفتے", sd: "4 کان 8 هفتا" },
+                     { val: "3 to 5 Months (3 se 5 Mahinay)", en: "3 to 5 Months", ur: "3 سے 5 مہینے", sd: "3 کان 5 مهينا" },
+                     { val: "6+ Months / Barren (6 Mahinay se Zyada / Banjar)", en: "6+ Months (Barren)", ur: "6 مہینے سے زیادہ (بنجر)", sd: "6 مهينن کان مٿي (بنجر)" }
                    ];
                    
                    const stageOptions = [
-                     "Seedling (Poda)",
-                     "Vegetative (Bara ho raha hai)",
-                     "Flowering (Phool lag rahe hain)",
-                     "Fruiting (Phal lag raha hai)",
-                     "Maturity (Pakk gaya hai)"
+                     { val: "Seedling (Poda)", en: "Seedling", ur: "پودا", sd: "پودو" },
+                     { val: "Vegetative (Bara ho raha hai)", en: "Vegetative", ur: "بڑا ہو رہا ہے", sd: "وڏو ٿي رهيو آهي" },
+                     { val: "Flowering (Phool lag rahe hain)", en: "Flowering", ur: "پھول لگ رہے ہیں", sd: "گل لڳي رهيا آهن" },
+                     { val: "Fruiting (Phal lag raha hai)", en: "Fruiting", ur: "پھل لگ رہا ہے", sd: "ڦر لڳي رهيو آهي" },
+                     { val: "Maturity (Pakk gaya hai)", en: "Maturity", ur: "پک گیا ہے", sd: "پچي ويو آهي" }
                    ];
 
                    return (
@@ -529,21 +529,21 @@ function App() {
                          <>
                            <div className="flex flex-col">
                              <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('last_crop')}</label>
-                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.prevCrop} onChange={(e)=>setFormData({...formData, prevCrop: e.target.value})}>
+                             <select dir={lang === 'en' ? 'ltr' : 'rtl'} className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.prevCrop} onChange={(e)=>setFormData({...formData, prevCrop: e.target.value})}>
                                {availCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
                              </select>
                            </div>
 
                            <div className="flex flex-col">
                              <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('rest_duration')}</label>
-                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.restDuration} onChange={(e)=>setFormData({...formData, restDuration: e.target.value})}>
-                               {restDurationOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                             <select dir={lang === 'en' ? 'ltr' : 'rtl'} className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.restDuration} onChange={(e)=>setFormData({...formData, restDuration: e.target.value})}>
+                               {restDurationOptions.map(r => <option key={r.val} value={r.val}>{r[lang]}</option>)}
                              </select>
                            </div>
 
                            <div className="flex flex-col p-4 bg-green-50 rounded-2xl border border-green-100">
                              <label className="text-sm font-bold text-agri-green mb-1">{t('plant_next')}</label>
-                             <select dir="ltr" className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
+                             <select dir={lang === 'en' ? 'ltr' : 'rtl'} className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
                                {plantCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
                              </select>
                            </div>
@@ -552,15 +552,15 @@ function App() {
                          <>
                            <div className="flex flex-col p-4 bg-green-50 rounded-2xl border border-green-100 mb-4">
                              <label className="text-sm font-bold text-agri-green mb-1">{t('current_crop')}</label>
-                             <select dir="ltr" className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
+                             <select dir={lang === 'en' ? 'ltr' : 'rtl'} className="bg-white p-3 rounded-lg font-bold text-agri-green outline-none ring-1 ring-green-200" value={formData.plannedCrop} onChange={(e)=>setFormData({...formData, plannedCrop: e.target.value})}>
                                {plantCrops.map(c => <option key={c} value={c}>{tCrop(c)}</option>)}
                              </select>
                            </div>
 
                            <div className="flex flex-col">
                              <label className="text-sm font-bold text-gray-600 mb-1 ml-1">{t('crop_stage')}</label>
-                             <select dir="ltr" className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.stage} onChange={(e)=>setFormData({...formData, stage: e.target.value})}>
-                               {stageOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                             <select dir={lang === 'en' ? 'ltr' : 'rtl'} className="bg-gray-100 p-4 rounded-xl font-medium outline-none border-2 border-transparent focus:border-agri-green" value={formData.stage} onChange={(e)=>setFormData({...formData, stage: e.target.value})}>
+                               {stageOptions.map(r => <option key={r.val} value={r.val}>{r[lang]}</option>)}
                              </select>
                            </div>
                          </>
@@ -584,8 +584,8 @@ function App() {
                 <div className={`p-6 rounded-3xl shadow-xl text-white ${report.status === 'warning' ? 'bg-orange-500' : 'bg-agri-green'}`}>
                   <div className="flex justify-between items-center mb-4 gap-3 relative" dir="ltr">
                     <div>
-                      <p className="text-sm opacity-80 font-bold tracking-widest text-white/90">{t('ai_decision')}</p>
-                      <h1 className="text-4xl font-black">{report.decision}</h1>
+                      <p className="text-sm opacity-80 font-bold tracking-widest text-white/90" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>{t('ai_decision')}</p>
+                      <h1 className="text-4xl font-black" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}}>{report.decision}</h1>
                     </div>
 
                     {/* Dynamic Voice Control Bar */}
