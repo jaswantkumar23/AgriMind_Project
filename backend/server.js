@@ -73,7 +73,7 @@ const runMLModel = (inputData) => {
 
 // main brain of the app using AI and ML
 const generateAIDiagnosis = async (data) => {
-  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang, testingPhase } = data;
+  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, soilCity, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang, testingPhase } = data;
 
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set in backend .env");
@@ -146,7 +146,7 @@ const generateAIDiagnosis = async (data) => {
     pH: ${ph}
     Moisture: ${moisture}%
     GPS Location: ${location || "Unknown"}
-    Soil Sample Source: ${soilSource || "Mirpur Khas"}
+    Soil Sample Source: City/Tehsil: ${soilCity || "Unknown City"}, District: ${soilSource || "Mirpur Khas"}
     Time Since Last Crop: ${restDuration || "Not Specified"}
     Previous Crop: ${prevCrop}
     Planned Crop: ${plannedCrop}
@@ -156,11 +156,11 @@ const generateAIDiagnosis = async (data) => {
     ${mlPredictionText}
     
     CORE COMPARATIVE LOGIC INSTRUCTION:
-    1. First, explicitly determine and state the typical soil type (e.g., sandy, loamy, clay) of the "Soil Sample Source" (${soilSource || "Mirpur Khas"}). Base your diagnosis entirely on this soil source, ignoring the GPS Location if they differ.
-    2. You are trained on the standard ideal NPK, pH, and Moisture ranges for all crops in ${soilSource || "Mirpur Khas"}. 
+    1. First, explicitly determine and state the typical soil type (e.g., sandy, loamy, clay) of the City/Tehsil "${soilCity || "Unknown City"}" in the district of "${soilSource || "Mirpur Khas"}". Base your diagnosis entirely on this specific city/tehsil's soil, ignoring the GPS Location if they differ.
+    2. You are trained on the standard ideal NPK, pH, and Moisture ranges for all crops in ${soilCity || "Unknown City"}, ${soilSource || "Mirpur Khas"}. 
     
     Provide your advice by following this STRICT structure:
-    1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${soilSource || "Mirpur Khas"}. Then compare the live probe data against the standard ideal requirements for the farmer's "Planned Crop" (${plannedCrop}) in that district. Explicitly mention the numbers. For example: "Achi Chilli ke liye N 80mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
+    1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${soilCity || "Unknown City"}. Then compare the live probe data against the standard ideal requirements for the farmer's "Planned Crop" (${plannedCrop}) in that exact city/tehsil. Explicitly mention the numbers. For example: "Achi Chilli ke liye N 80mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
     2. SECOND (AgriMind ML Insight): Gently introduce the "CRITICAL AGRIMIND ASSISTANT INSIGHT" (${mlPredictionText}). Present this as a highly recommended expert option.
     
     ${mlAlternativesText || 'CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values and suggest crops that naturally thrive perfectly in these exact soil conditions without needing much extra fertilizer.'}
@@ -168,12 +168,12 @@ const generateAIDiagnosis = async (data) => {
     Respond STRICTLY in JSON format matching this schema exactly (no markdown blocks around it):
     {
       "decision": "PROCEED" or "STOP & WAIT",
-      "diagnosisText": "An extremely warm, friendly conversational script. Start with ${greeting}. Act as the smart comparative engine explaining the exact numbers and requirements for ${plannedCrop}, prescribing specific fertilizer fixes, and mentioning the AgriMind insight. IMPORTANT: Spell out the units in the requested language (e.g., write 'ملی گرام فی کلوگرام' instead of 'mg/kg'). DO NOT use English symbols. NEVER use 'Machine Learning', always use 'AgriMind Assistant'.",
+      "diagnosisText": "An extremely warm, friendly conversational script. Start with ${greeting}. Act as the smart comparative engine explaining the exact numbers and requirements for ${plannedCrop}, prescribing specific fertilizer fixes, and mentioning the AgriMind insight. CRITICAL: DO NOT list or mention any alternative crops here! Focus ONLY on the planned crop. The alternatives will be displayed separately in the UI. IMPORTANT: Spell out the units in the requested language (e.g., write 'ملی گرام فی کلوگرام' instead of 'mg/kg'). DO NOT use English symbols. NEVER use 'Machine Learning', always use 'AgriMind Assistant'.",
       "speechText": "The EXACT SAME script but transliterated purely into Devanagari (Hindi) script for TTS.",
       "waitTime": "e.g., 'Plant immediately' or 'Wait 4 weeks' in the requested language.",
       "status": "success" (if proceed) or "warning" (if stop),
       "alternatives": [
-        { "crop": "CropName (in requested language)", "why": "A highly detailed paragraph explaining exactly why this alternative crop is a perfect match for the CURRENT soil NPK/pH without extra fertilizer." }
+        { "crop": "CropName (in requested language)", "why": "A highly detailed paragraph explaining exactly why this alternative crop is a perfect match for the CURRENT soil NPK/pH without extra fertilizer. (DO NOT put this in diagnosisText)" }
       ]
     }
   `;

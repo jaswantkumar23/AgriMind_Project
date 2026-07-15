@@ -22,7 +22,8 @@ const tDict = {
     no_history: "No historical data found. Save some reports first!",
     recent_tests: "Recent Tests", see_more: "See Details", see_less: "Hide Details",
     pre_sowing: "Pre-Sowing (New Crop)", growth_phase: "Growth Phase (Existing Crop)",
-    current_crop: "Current Growing Crop", crop_stage: "Crop Stage / Age"
+    current_crop: "Current Growing Crop", crop_stage: "Crop Stage / Age",
+    soil_city: "Select Tehsil/City"
   },
   ur: {
     soil_ai: "مٹی کی جانچ", crop_doctor: "فصل کا ڈاکٹر", dashboard: "ڈیش بورڈ",
@@ -42,7 +43,8 @@ const tDict = {
     no_history: "کوئی پرانا ریکارڈ نہیں ملا۔",
     recent_tests: "حالیہ ٹیسٹ", see_more: "مزید تفصیل دیکھیں", see_less: "تفصیل چھپائیں",
     pre_sowing: "نئی فصل لگانی ہے", growth_phase: "فصل لگی ہوئی ہے",
-    current_crop: "موجودہ فصل", crop_stage: "فصل کی عمر / سٹیج"
+    current_crop: "موجودہ فصل", crop_stage: "فصل کی عمر / سٹیج",
+    soil_city: "تحصیل / شہر منتخب کریں"
   },
   sd: {
     soil_ai: "مٽي جي جانچ", crop_doctor: "فصل جو ڊاڪٽر", dashboard: "ڊيش بورڊ",
@@ -62,7 +64,8 @@ const tDict = {
     no_history: "ڪو به پراڻو رڪارڊ نه مليو.",
     recent_tests: "تازو ٽيسٽ", see_more: "وڌيڪ تفصيل ڏسو", see_less: "تفصيل لڪايو",
     pre_sowing: "نئون فصل لڳائڻو آهي", growth_phase: "فصل لڳل آهي",
-    current_crop: "موجوده فصل", crop_stage: "فصل جي عمر / اسٽيج"
+    current_crop: "موجوده فصل", crop_stage: "فصل جي عمر / اسٽيج",
+    soil_city: "تعلقو / شهر چونڊيو"
   }
 };
 
@@ -88,7 +91,7 @@ const cropDict = {
 };
 
 const initialFormData = {
-  nitrogen: "", phosphorus: "", potassium: "", ph: "", moisture: "", location: "", soilSource: "Mirpur Khas",
+  nitrogen: "", phosphorus: "", potassium: "", ph: "", moisture: "", location: "", soilSource: "Mirpur Khas", soilCity: "Mirpur Khas",
   prevCrop: "None", restDuration: "1 to 3 Weeks (1 se 3 Hafte)", plannedCrop: "Cotton", 
   testingPhase: "Pre-Sowing", stage: "Vegetative", lat: null, lng: null
 };
@@ -135,6 +138,11 @@ function App() {
   };
 
   const districtOptions = ["Mirpur Khas", "Umerkot", "Tharparkar"];
+  const districtCities = {
+    "Mirpur Khas": ["Mirpur Khas", "Digri", "Kot Ghulam Muhammad", "Sindhri", "Shujabad", "Jhuddo", "Naukot", "Tando Jan Muhammad", "Hussain Bakhsh Mari"],
+    "Umerkot":     ["Umerkot", "Kunri", "Samaro", "Pithoro"],
+    "Tharparkar":  ["Mithi", "Diplo", "Islamkot", "Chachro", "Dahli", "Nagarparkar", "Kaloi"]
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -405,16 +413,24 @@ function App() {
 
                 <div className="mb-4">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Soil Sample Source (Origin)</label>
-                  <select 
-                    value={formData.soilSource} 
-                    onChange={e => setFormData({...formData, soilSource: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
-                    dir="ltr"
-                  >
-                    <option value="Mirpur Khas">Mirpur Khas</option>
-                    <option value="Umerkot">Umerkot</option>
-                    <option value="Tharparkar">Tharparkar</option>
-                  </select>
+                  <div className="flex gap-2">
+                    <select 
+                      value={formData.soilSource} 
+                      onChange={e => setFormData({...formData, soilSource: e.target.value, soilCity: districtCities[e.target.value][0]})}
+                      className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
+                      dir="ltr"
+                    >
+                      {districtOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <select 
+                      value={formData.soilCity} 
+                      onChange={e => setFormData({...formData, soilCity: e.target.value})}
+                      className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
+                      dir="ltr"
+                    >
+                      {districtCities[formData.soilSource].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
                   <p className="text-xs text-gray-400 mt-1">Select where the soil is actually from, regardless of your current GPS location.</p>
                 </div>
 
@@ -493,22 +509,22 @@ function App() {
                    ];
 
                    return (
-                     <div className="space-y-4 mb-6">
-                       <div className="flex bg-green-50/50 p-1.5 rounded-full mb-6 border border-green-100 shadow-inner">
-                         <button 
-                           onClick={() => setFormData({...formData, testingPhase: "Pre-Sowing"})} 
-                           className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Pre-Sowing" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
-                         >
-                           {t('pre_sowing')}
-                         </button>
-                         <button 
-                           onClick={() => setFormData({...formData, testingPhase: "Growth"})} 
-                           className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Growth" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
-                         >
-                           {t('growth_phase')}
-                         </button>
-                       </div>
-                       
+                     
+                      <div className="space-y-4 mb-6">
+                        <div className="flex bg-green-50/50 p-1.5 rounded-full mb-6 border border-green-100 shadow-inner">
+                          <button 
+                            onClick={() => setFormData({...formData, testingPhase: "Pre-Sowing"})} 
+                            className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Pre-Sowing" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
+                          >
+                            {t('pre_sowing')}
+                          </button>
+                          <button 
+                            onClick={() => setFormData({...formData, testingPhase: "Growth"})} 
+                            className={`flex-1 py-3 text-sm font-black rounded-full transition-all duration-300 ${formData.testingPhase === "Growth" ? 'bg-agri-green text-white shadow-md scale-[1.02]' : 'text-gray-500 hover:text-agri-green hover:bg-green-50'}`}
+                          >
+                            {t('growth_phase')}
+                          </button>
+                        </div>
                        {formData.testingPhase === "Pre-Sowing" ? (
                          <>
                            <div className="flex flex-col">
