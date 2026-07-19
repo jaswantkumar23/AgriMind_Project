@@ -3,6 +3,7 @@ import json
 import pickle
 import pandas as pd
 import warnings
+import os
 warnings.filterwarnings('ignore')
 
 def main():
@@ -13,8 +14,11 @@ def main():
         
         situation = data.get('situation', 'Pre-Sowing') # 'Pre-Sowing' or 'Growth'
         
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        models_dir = os.path.join(base_dir, '..', 'models')
+        
         if situation == 'Pre-Sowing':
-            with open('d:/AgriMind_Project/models/model1_presowing.pkl', 'rb') as f:
+            with open(os.path.join(models_dir, 'model1_presowing.pkl'), 'rb') as f:
                 model_data = pickle.load(f)
                 model = model_data['model']
                 encoders = model_data['encoders']
@@ -43,7 +47,7 @@ def main():
             result = {"prediction": pred, "type": "crop_recommendation"}
             
         else: # Growth Phase
-            with open('d:/AgriMind_Project/models/model2_growth.pkl', 'rb') as f:
+            with open(os.path.join(models_dir, 'model2_growth.pkl'), 'rb') as f:
                 model_data = pickle.load(f)
                 model = model_data['model']
                 encoders = model_data['encoders']

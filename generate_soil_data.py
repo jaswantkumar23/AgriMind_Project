@@ -397,8 +397,10 @@ columns = [
 df = pd.DataFrame(data_rows, columns=columns)
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)  # Shuffle rows
 
-os.makedirs("d:/AgriMind_Project/data", exist_ok=True)
-output_path = "d:/AgriMind_Project/data/mirpurkhas_agri_data.csv"
+base_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(base_dir, "data")
+os.makedirs(data_dir, exist_ok=True)
+output_path = os.path.join(data_dir, "mirpurkhas_agri_data.csv")
 df.to_csv(output_path, index=False)
 
 print("\n" + "=" * 60)

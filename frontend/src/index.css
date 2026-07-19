@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* RTL support for Urdu and Sindhi */
+.dir-rtl {
+  direction: rtl;
+}

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { Sprout, Activity, ClipboardCheck, Volume2, RotateCcw, ArrowRight, ArrowLeft, Play, Pause, FastForward, Rewind, Mic, MicOff, Camera, Upload, History, Save, Globe } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import "./App.css";
 
 const tDict = {
   en: {
@@ -53,7 +54,7 @@ const tDict = {
     upload_photo: "تصوير وٺو (ڪئميرا)", analyze_disease: "بيماري چيڪ ڪريو", scanning: "چيڪ ڪري رهيو آهي...",
     disease_detected: "بيماري", diagnosis: "تفصيل", treatment: "علاج / حل",
     listen_diagnosis: "آواز ۾ ٻڌو", history_tracking: "پراڻو رڪارڊ",
-    nitrogen: "نائٹروجن", phosphorus: "فاسفورس", potassium: "پوٽاشيم", ph: "پي ايچ (pH)", moisture: "نمي",
+    nitrogen: "نائٽروجن", phosphorus: "فاسفورس", potassium: "پوٽاشيم", ph: "پي ايچ (pH)", moisture: "نمي",
     camera_instruction: "بيمار فصل يا پنن جي تصوير وٺو.",
     no_history: "ڪو به پراڻو رڪارڊ نه مليو.",
     recent_tests: "تازو ٽيسٽ", see_more: "وڌيڪ تفصيل ڏسو", see_less: "تفصيل لڪايو"

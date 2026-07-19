@@ -40,7 +40,7 @@ const runMLModel = (inputData) => {
   return new Promise((resolve, reject) => {
     const { spawn } = require('child_process');
     // Using default python, user can override via .env
-    const pythonCmd = process.env.PYTHON_CMD || 'C:/Users/KS Technologies/AppData/Local/Programs/Python/Python311/python.exe';
+    const pythonCmd = process.env.PYTHON_CMD || 'python';
     
     const pythonProcess = spawn(pythonCmd, ['predict_ml.py']);
     
@@ -69,6 +69,57 @@ const runMLModel = (inputData) => {
     pythonProcess.stdin.write(JSON.stringify(inputData));
     pythonProcess.stdin.end();
   });
+};
+
+// retry helper: retries on 503 with exponential backoff, falls back to other models
+const GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+const is503Error = (err) => {
+  // handles all possible ways the 503 can appear in the google genai sdk
+  if (!err) return false;
+  if (err.status === 503) return true;
+  if (typeof err.status === 'string' && err.status === '503') return true;
+  if (err.message && err.message.includes('503')) return true;
+  if (err.message && err.message.toLowerCase().includes('unavailable')) return true;
+  if (err.message && err.message.toLowerCase().includes('high demand')) return true;
+  try {
+    const parsed = JSON.parse(err.message);
+    if (parsed?.error?.code === 503) return true;
+    if (parsed?.error?.status === 'UNAVAILABLE') return true;
+  } catch (_) {}
+  return false;
+};
+
+const generateWithRetry = async (ai, contents, config = {}, maxRetries = 4) => {
+  for (let modelIndex = 0; modelIndex < GEMINI_MODELS.length; modelIndex++) {
+    const model = GEMINI_MODELS[modelIndex];
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Trying model: ${model} (attempt ${attempt}/${maxRetries})`);
+        const response = await ai.models.generateContent({ model, contents, config });
+        console.log(`✅ Success with model: ${model}`);
+        return response;
+      } catch (err) {
+        const busy = is503Error(err);
+        const isLastAttempt = attempt === maxRetries;
+        const isLastModel = modelIndex === GEMINI_MODELS.length - 1;
+
+        if (busy && !isLastAttempt) {
+          const delay = Math.pow(2, attempt) * 1500; // 3s, 6s, 12s, 24s
+          console.warn(`⚠️ Model ${model} is busy. Retrying in ${delay / 1000}s... [attempt ${attempt}/${maxRetries}]`);
+          await new Promise(r => setTimeout(r, delay));
+        } else if (busy && isLastAttempt && !isLastModel) {
+          console.warn(`⚠️ Model ${model} exhausted all retries. Switching to next model...`);
+          break; // try next model
+        } else if (busy && isLastAttempt && isLastModel) {
+          throw new Error('All Gemini models are currently busy. Please try again in a few minutes.');
+        } else {
+          throw err; // non-503 error — bubble up immediately
+        }
+      }
+    }
+  }
+  throw new Error('All Gemini models are currently busy. Please try again in a few minutes.');
 };
 
 // main brain of the app using AI and ML
@@ -170,13 +221,7 @@ const generateAIDiagnosis = async (data) => {
   `;
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-    }
-  });
+  const response = await generateWithRetry(ai, prompt, { responseMimeType: "application/json" });
 
   let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
   return JSON.parse(cleanText);
@@ -224,13 +269,7 @@ app.post("/api/parse-speech", async (req, res) => {
       }
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite', // using flash-lite to avoid 503 downtime
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
+    const response = await generateWithRetry(ai, prompt, { responseMimeType: "application/json" });
 
     let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
     res.json(JSON.parse(cleanText));
@@ -292,21 +331,10 @@ app.post("/api/crop-doctor", async (req, res) => {
       }
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: prompt },
-            ...imageParts
-          ]
-        }
-      ],
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
+    const response = await generateWithRetry(ai,
+      [{ role: "user", parts: [{ text: prompt }, ...imageParts] }],
+      { responseMimeType: "application/json" }
+    );
 
     let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
     res.json(JSON.parse(cleanText));
