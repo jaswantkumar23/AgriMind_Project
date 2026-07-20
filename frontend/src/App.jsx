@@ -22,8 +22,8 @@ const tDict = {
     no_history: "No historical data found. Save some reports first!",
     recent_tests: "Recent Tests", see_more: "See Details", see_less: "Hide Details",
     pre_sowing: "Pre-Sowing (New Crop)", growth_phase: "Growth Phase (Existing Crop)",
-    current_crop: "Current Growing Crop", crop_stage: "Crop Stage / Age",
-    soil_city: "Select Tehsil/City"
+    soil_city: "Select Tehsil/City",
+    soil_guide: "Soil Guide"
   },
   ur: {
     soil_ai: "مٹی کی جانچ", crop_doctor: "فصل کا ڈاکٹر", dashboard: "ڈیش بورڈ",
@@ -44,7 +44,8 @@ const tDict = {
     recent_tests: "حالیہ ٹیسٹ", see_more: "مزید تفصیل دیکھیں", see_less: "تفصیل چھپائیں",
     pre_sowing: "نئی فصل لگانی ہے", growth_phase: "فصل لگی ہوئی ہے",
     current_crop: "موجودہ فصل", crop_stage: "فصل کی عمر / سٹیج",
-    soil_city: "تحصیل / شہر منتخب کریں"
+    soil_city: "تحصیل / شہر منتخب کریں",
+    soil_guide: "مٹی کا رہنما"
   },
   sd: {
     soil_ai: "مٽي جي جانچ", crop_doctor: "فصل جو ڊاڪٽر", dashboard: "ڊيش بورڊ",
@@ -63,9 +64,9 @@ const tDict = {
     camera_instruction: "بيمار فصل يا پنن جي تصوير وٺو.",
     no_history: "ڪو به پراڻو رڪارڊ نه مليو.",
     recent_tests: "تازو ٽيسٽ", see_more: "وڌيڪ تفصيل ڏسو", see_less: "تفصيل لڪايو",
-    pre_sowing: "نئون فصل لڳائڻو آهي", growth_phase: "فصل لڳل آهي",
     current_crop: "موجوده فصل", crop_stage: "فصل جي عمر / اسٽيج",
-    soil_city: "تعلقو / شهر چونڊيو"
+    soil_city: "تعلقو / شهر چونڊيو",
+    soil_guide: "مٽي جو رھنما"
   }
 };
 
@@ -404,7 +405,7 @@ function App() {
         <h1 className="text-2xl font-black flex items-center gap-2 cursor-pointer" style={{fontFamily: 'system-ui, -apple-system, sans-serif'}} onClick={() => handleTabChange('soil')}>
           <Sprout /> AgriMind
         </h1>
-        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-[540px] max-w-full h-12 items-stretch gap-1">
+        <div className="flex bg-white/20 rounded-full p-1 w-full md:w-[650px] max-w-full h-12 items-stretch gap-1">
           <button 
             onClick={() => setLang(l => l === 'en' ? 'ur' : l === 'ur' ? 'sd' : 'en')} 
             className="px-4 bg-black/20 text-white hover:bg-black/30 rounded-full font-bold flex gap-2 items-center justify-center transition-all h-full"
@@ -417,6 +418,9 @@ function App() {
           </button>
           <button onClick={() => handleTabChange('doctor')} className={`flex-1 min-w-[125px] flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'doctor' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <Camera size={16}/> {t('crop_doctor')}
+          </button>
+          <button onClick={() => handleTabChange('guide')} className={`flex-1 min-w-[110px] flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'guide' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
+            <Sprout size={16}/> {t('soil_guide')}
           </button>
           <button onClick={() => handleTabChange('dashboard')} className={`flex-1 min-w-[110px] flex justify-center items-center gap-1 px-4 rounded-full font-bold text-sm transition-all whitespace-nowrap h-full ${activeTab === 'dashboard' ? 'bg-white text-agri-green shadow' : 'text-white hover:bg-white/10'}`}>
             <History size={16}/> {t('dashboard')}
@@ -834,6 +838,16 @@ function App() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* SOIL GUIDE TAB */}
+        {activeTab === 'guide' && (
+          <div className="bg-white rounded-3xl shadow-xl p-6 border-t-8 border-agri-green transform transition-all animate-in fade-in zoom-in-95">
+            <h2 className="text-2xl font-black text-gray-800 mb-6 flex items-center gap-2">
+              <Sprout className="text-agri-green"/> {t('soil_guide')}
+            </h2>
+            <p className="text-gray-500 text-center py-10 font-bold">Soil Handbook Coming Soon!</p>
           </div>
         )}
       </div>
