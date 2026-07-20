@@ -928,10 +928,58 @@ function App() {
         {/* SOIL GUIDE TAB */}
         {activeTab === 'guide' && (
           <div className="bg-white rounded-3xl shadow-xl p-6 border-t-8 border-agri-green transform transition-all animate-in fade-in zoom-in-95">
-            <h2 className="text-2xl font-black text-gray-800 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
               <Sprout className="text-agri-green"/> {t('soil_guide')}
             </h2>
-            <p className="text-gray-500 text-center py-10 font-bold">Soil Handbook Coming Soon!</p>
+            <p className="text-sm text-gray-500 mb-6 font-medium">Select a crop to view its ideal soil parameters and recommendations.</p>
+            
+            {/* Crop Selector */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-gray-600 mb-2">Select Crop / فصل منتخب کریں</label>
+              <select 
+                value={selectedGuideCrop} 
+                onChange={e => setSelectedGuideCrop(e.target.value)}
+                className="w-full border-2 border-gray-100 rounded-2xl p-4 bg-gray-50 text-gray-800 font-bold focus:border-agri-green outline-none"
+                dir={lang === 'en' ? 'ltr' : 'rtl'}
+              >
+                {Object.keys(soilGuideDb).map(crop => (
+                  <option key={crop} value={crop}>{tCrop(crop)}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ideal Parameters Cards */}
+            {(() => {
+              const guide = soilGuideDb[selectedGuideCrop];
+              if (!guide) return null;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                      <p className="text-xs text-blue-800 font-bold">{t('nitrogen')}</p>
+                      <p className="text-xl font-black text-blue-700" dir="ltr">{guide.N[0]} - {guide.N[1]} <span className="text-xs text-gray-400 font-normal">mg/kg</span></p>
+                    </div>
+                    <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100">
+                      <p className="text-xs text-purple-800 font-bold">{t('phosphorus')}</p>
+                      <p className="text-xl font-black text-purple-700" dir="ltr">{guide.P[0]} - {guide.P[1]} <span className="text-xs text-gray-400 font-normal">mg/kg</span></p>
+                    </div>
+                    <div className="bg-yellow-50/50 p-4 rounded-2xl border border-yellow-100">
+                      <p className="text-xs text-yellow-800 font-bold">{t('potassium')}</p>
+                      <p className="text-xl font-black text-yellow-700" dir="ltr">{guide.K[0]} - {guide.K[1]} <span className="text-xs text-gray-400 font-normal">mg/kg</span></p>
+                    </div>
+                    <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                      <p className="text-xs text-green-800 font-bold">{t('ph')}</p>
+                      <p className="text-xl font-black text-green-700" dir="ltr">{guide.pH[0]} - {guide.pH[1]} <span className="text-xs text-gray-400 font-normal">pH</span></p>
+                    </div>
+                  </div>
+
+                  <div className="bg-sky-50/50 p-4 rounded-2xl border border-sky-100 flex justify-between items-center">
+                    <p className="text-sm font-bold text-sky-800">{t('moisture')}</p>
+                    <p className="text-xl font-black text-sky-700" dir="ltr">{guide.Moisture[0]}% - {guide.Moisture[1]}%</p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
