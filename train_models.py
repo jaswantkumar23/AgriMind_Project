@@ -7,8 +7,8 @@ from sklearn.metrics import accuracy_score
 import pickle
 import os
 
-# 1. Load Data
-data_path = 'd:/AgriMind_Project/data/mirpurkhas_agri_data.csv'
+base_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(base_dir, 'data', 'mirpurkhas_agri_data.csv')
 if not os.path.exists(data_path):
     print(f"Error: {data_path} not found. Run generate_soil_data.py first.")
     exit(1)
@@ -76,12 +76,15 @@ print(f"Model 2 Accuracy: {acc2 * 100:.2f}%\n")
 # ---------------------------------------------------------
 # SAVE MODELS AND ENCODERS
 # ---------------------------------------------------------
-os.makedirs('d:/AgriMind_Project/models', exist_ok=True)
+models_dir = os.path.join(base_dir, 'models')
+os.makedirs(models_dir, exist_ok=True)
 
-with open('d:/AgriMind_Project/models/model1_presowing.pkl', 'wb') as f:
+model1_path = os.path.join(models_dir, 'model1_presowing.pkl')
+with open(model1_path, 'wb') as f:
     pickle.dump({'model': rf1, 'encoders': le_dict_m1}, f)
 
-with open('d:/AgriMind_Project/models/model2_growth.pkl', 'wb') as f:
+model2_path = os.path.join(models_dir, 'model2_growth.pkl')
+with open(model2_path, 'wb') as f:
     pickle.dump({'model': rf2, 'encoders': le_dict_m2}, f)
 
-print("Models and Encoders successfully saved to d:/AgriMind_Project/models/")
+print(f"Models and Encoders successfully saved to {models_dir}")
