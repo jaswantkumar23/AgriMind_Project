@@ -90,6 +90,51 @@ const cropDict = {
   }
 };
 
+const districtDict = {
+  en: {
+    "Mirpur Khas": "Mirpur Khas",
+    "Umerkot": "Umerkot",
+    "Tharparkar": "Tharparkar"
+  },
+  ur: {
+    "Mirpur Khas": "میرپور خاص",
+    "Umerkot": "عمرکوٹ",
+    "Tharparkar": "تھرپارکر"
+  },
+  sd: {
+    "Mirpur Khas": "ميرپور خاص",
+    "Umerkot": "عمرڪوٽ",
+    "Tharparkar": "ٿرپارڪر"
+  }
+};
+
+const cityDict = {
+  en: {
+    "Digri": "Digri", "Hussain Bakhsh Mari": "Hussain Bakhsh Mari", "Jhuddo": "Jhuddo", 
+    "Kot Ghulam Muhammad": "Kot Ghulam Muhammad", "Mirpur Khas": "Mirpur Khas", "Naukot": "Naukot", 
+    "Shujabad": "Shujabad", "Sindhri": "Sindhri", "Tando Jan Muhammad": "Tando Jan Muhammad",
+    "Kunri": "Kunri", "Pithoro": "Pithoro", "Samaro": "Samaro", "Umerkot": "Umerkot",
+    "Chachro": "Chachro", "Dahli": "Dahli", "Diplo": "Diplo", "Islamkot": "Islamkot", 
+    "Kaloi": "Kaloi", "Mithi": "Mithi", "Nagarparkar": "Nagarparkar"
+  },
+  ur: {
+    "Digri": "ڈگری", "Hussain Bakhsh Mari": "حسین بخش مری", "Jhuddo": "جھڈو", 
+    "Kot Ghulam Muhammad": "کوٹ غلام محمد", "Mirpur Khas": "میرپور خاص", "Naukot": "نوکوٹ", 
+    "Shujabad": "شجاع آباد", "Sindhri": "سندھڑی", "Tando Jan Muhammad": "ٹنڈو جان محمد",
+    "Kunri": "کنری", "Pithoro": "پتھورو", "Samaro": "سامارو", "Umerkot": "عمرکوٹ",
+    "Chachro": "چھاچھرو", "Dahli": "ڈاہلی", "Diplo": "ڈپلو", "Islamkot": "اسلام کوٹ", 
+    "Kaloi": "کالوئی", "Mithi": "مٹھی", "Nagarparkar": "نگرپارکر"
+  },
+  sd: {
+    "Digri": "ڊگھڙي", "Hussain Bakhsh Mari": "حسين بخش مري", "Jhuddo": "جھڏو", 
+    "Kot Ghulam Muhammad": "ڪوٽ غلام محمد", "Mirpur Khas": "ميرپور خاص", "Naukot": "نوڪوٽ", 
+    "Shujabad": "شجاع آباد", "Sindhri": "سنڌڙي", "Tando Jan Muhammad": "ٽنڊو جان محمد",
+    "Kunri": "ڪنري", "Pithoro": "پٿورو", "Samaro": "سامارو", "Umerkot": "عمرڪوٽ",
+    "Chachro": "ڇاڇرو", "Dahli": "ڏاهلي", "Diplo": "ڏپلو", "Islamkot": "اسلام ڪوٽ", 
+    "Kaloi": "ڪالوئي", "Mithi": "مٺي", "Nagarparkar": "نگرپارڪر"
+  }
+};
+
 const initialFormData = {
   nitrogen: "", phosphorus: "", potassium: "", ph: "", moisture: "", location: "", soilSource: "Mirpur Khas", soilCity: "Mirpur Khas",
   prevCrop: "None", restDuration: "1 to 3 Weeks (1 se 3 Hafte)", plannedCrop: "Cotton", 
@@ -100,6 +145,8 @@ function App() {
   const [lang, setLang] = useState('en');
   const t = (key) => tDict[lang][key] || key;
   const tCrop = (crop) => cropDict[lang][crop] || crop;
+  const tDistrict = (dist) => (districtDict[lang] && districtDict[lang][dist]) || dist;
+  const tCity = (city) => (cityDict[lang] && cityDict[lang][city]) || city;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
@@ -420,7 +467,7 @@ function App() {
                       className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
                       dir={lang === 'en' ? 'ltr' : 'rtl'}
                     >
-                      {districtOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                      {districtOptions.map(d => <option key={d} value={d}>{tDistrict(d)}</option>)}
                     </select>
                     <select 
                       value={formData.soilCity} 
@@ -428,7 +475,7 @@ function App() {
                       className="flex-1 border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-800 font-medium focus:ring-2 focus:ring-agri-green outline-none"
                       dir={lang === 'en' ? 'ltr' : 'rtl'}
                     >
-                      {districtCities[formData.soilSource].map(c => <option key={c} value={c}>{c}</option>)}
+                      {districtCities[formData.soilSource].map(c => <option key={c} value={c}>{tCity(c)}</option>)}
                     </select>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Select where the soil is actually from, regardless of your current GPS location.</p>
