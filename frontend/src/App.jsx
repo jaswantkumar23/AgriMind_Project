@@ -977,6 +977,16 @@ function App() {
                     <p className="text-sm font-bold text-sky-800">{t('moisture')}</p>
                     <p className="text-xl font-black text-sky-700" dir="ltr">{guide.Moisture[0]}% - {guide.Moisture[1]}%</p>
                   </div>
+
+                  {/* Fertilizer Tips */}
+                  <div className="bg-green-50 p-5 rounded-2xl border border-green-200 mt-4">
+                    <h4 className="font-black text-agri-green text-sm mb-2 uppercase tracking-wide">
+                      {lang === 'ur' ? 'تجویز کردہ کھاد اور رہنمائی' : lang === 'sd' ? 'تجويز ڪيل ڀاڻ ۽ ھدايتون' : 'Recommended Fertilizer & Soil Care'}
+                    </h4>
+                    <p className={`font-semibold text-gray-700 ${lang === 'ur' || lang === 'sd' ? 'text-sm leading-8' : 'text-xs leading-relaxed'}`}>
+                      {guide.tips[lang] || guide.tips['en']}
+                    </p>
+                  </div>
                 </div>
               );
             })()}
