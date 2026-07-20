@@ -39,10 +39,9 @@ const { GoogleGenAI } = require("@google/genai");
 const runMLModel = (inputData) => {
   return new Promise((resolve, reject) => {
     const { spawn } = require('child_process');
-    // Using default python, user can override via .env
-    const pythonCmd = process.env.PYTHON_CMD || 'C:/Users/KS Technologies/AppData/Local/Programs/Python/Python311/python.exe';
+    const pythonCmd = process.env.PYTHON_CMD || 'python';
     
-    const pythonProcess = spawn(pythonCmd, ['predict_ml.py']);
+    const pythonProcess = spawn(pythonCmd, ['predict_ml.py'], { cwd: __dirname });
     
     let resultData = '';
     let errorData = '';
@@ -71,6 +70,28 @@ const runMLModel = (inputData) => {
   });
 };
 
+// Sindh regional soil profiles database
+const SINDH_AGRI_KNOWLEDGE = {
+  "Mirpur Khas": {
+    soilType: "Fertile Alluvial Plain / Clay Loam & Silt Loam",
+    waterType: "Canal Irrigated",
+    characteristics: "High agricultural yield potential, good moisture retention, suitable for intensive cash cropping.",
+    topCrops: ["Cotton", "Wheat", "Sugarcane", "Mango", "Banana", "Chilli", "Rice", "Tomato", "Onion", "Guava"]
+  },
+  "Umerkot": {
+    soilType: "Semi-Arid Transition Plain / Sandy Loam & Loamy",
+    waterType: "Partial Canal & Groundwater",
+    characteristics: "Moderate organic matter, excellent drainage, famous for high quality chilli and oilseed crops.",
+    topCrops: ["Cotton", "Wheat", "Bajra", "Guar", "Moth bean", "Onion", "Chilli", "Sunflower", "Jowar"]
+  },
+  "Tharparkar": {
+    soilType: "Arid Desert Sand & Sandy Loam",
+    waterType: "Rain-fed & Deep Brackish Wells",
+    characteristics: "Low nitrogen and low organic matter, vulnerable to dry spells, optimal for drought-hardy legumes and fodder.",
+    topCrops: ["Bajra", "Guar", "Moth bean", "Jowar", "Dates", "Desert grasses", "Wheat"]
+  }
+};
+
 // main brain of the app using AI and ML
 const generateAIDiagnosis = async (data) => {
   let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, soilCity, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang, testingPhase } = data;
@@ -78,25 +99,30 @@ const generateAIDiagnosis = async (data) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set in backend .env");
   }
+
+  const district = soilSource || "Mirpur Khas";
+  const city = soilCity || "Mirpur Khas";
+  const districtInfo = SINDH_AGRI_KNOWLEDGE[district] || SINDH_AGRI_KNOWLEDGE["Mirpur Khas"];
+
   // calling weather api for live data based on soilSource
   let weatherContext = "Weather data unavailable.";
-  let wLat = 25.396; let wLng = 68.3578; // Default Mirpur Khas roughly
-  if (soilSource === "Mirpur Khas") { wLat = 25.5251; wLng = 69.0159; }
-  else if (soilSource === "Umerkot") { wLat = 25.3615; wLng = 69.7362; }
-  else if (soilSource === "Tharparkar") { wLat = 24.7977; wLng = 69.8058; }
+  let wLat = 25.396; let wLng = 68.3578; // Default Mirpur Khas
+  if (district === "Mirpur Khas") { wLat = 25.5251; wLng = 69.0159; }
+  else if (district === "Umerkot") { wLat = 25.3615; wLng = 69.7362; }
+  else if (district === "Tharparkar") { wLat = 24.7977; wLng = 69.8058; }
   
   try {
     const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${wLat}&longitude=${wLng}&current_weather=true`);
     const weatherData = await weatherRes.json();
     if (weatherData && weatherData.current_weather) {
       const { temperature, windspeed } = weatherData.current_weather;
-      weatherContext = `Current Temperature in ${soilSource}: ${temperature}°C, Wind Speed: ${windspeed} km/h`;
+      weatherContext = `Current Temperature in ${district} (${city}): ${temperature}°C, Wind Speed: ${windspeed} km/h`;
     }
   } catch (err) {
-    console.error("Weather fetch error:", err);
+    console.error("Weather fetch warning:", err.message);
   }
 
-  // calling python for prediction
+  // calling python ML model for prediction
   let mlPredictionText = "";
   let mlAlternativesText = "";
   let situation = testingPhase || "Pre-Sowing";
@@ -104,91 +130,103 @@ const generateAIDiagnosis = async (data) => {
   try {
     const mlInput = {
       situation: situation,
-      District: soilSource || location || "Mirpur Khas",
+      District: district,
+      Soil_Type: districtInfo.soilType,
       N: nitrogen, P: phosphorus, K: potassium, pH: ph, Moisture: moisture,
       Previous_Crop: prevCrop || "None",
       Current_Crop: plannedCrop || "Cotton",
       Stage: stage || "Vegetative"
     };
     
-    console.log("🤖 Running ML Model...");
+    console.log("🤖 Running AgriMind ML Engine...");
     const mlResult = await runMLModel(mlInput);
     console.log("🤖 ML Result:", mlResult);
     
-    if (mlResult.type === "crop_recommendation") {
-      mlPredictionText = `The AgriMind ML Model mathematically predicts the #1 best crop is: ${mlResult.prediction}. Make sure to strongly recommend this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
-      if (mlResult.alternatives && mlResult.alternatives.length > 0) {
-        mlAlternativesText = `CRITICAL: The ML model strictly selected these alternative crops based on probability: ${mlResult.alternatives.join(", ")}. You MUST ONLY use these exact crops in the 'alternatives' array and explain why they match the current NPK perfectly.`;
+    if (mlResult && !mlResult.error) {
+      const confidenceStr = mlResult.confidence ? ` (Statistical Confidence: ${mlResult.confidence}%)` : '';
+      if (mlResult.type === "crop_recommendation") {
+        mlPredictionText = `The AgriMind ML Model mathematically predicts the top recommended crop for this soil sample is: ${mlResult.prediction}${confidenceStr}. Strongly highlight this expert insight from the "AgriMind Assistant".`;
+        if (mlResult.alternatives && mlResult.alternatives.length > 0) {
+          mlAlternativesText = `CRITICAL: The ML model selected these top alternative crops based on highest probability: ${mlResult.alternatives.join(", ")}. Use these crops for the 'alternatives' list.`;
+        }
+      } else {
+        mlPredictionText = `The AgriMind ML Model mathematically recommends this fertilizer action: ${mlResult.prediction}${confidenceStr}. Advise the farmer accordingly.`;
       }
     } else {
-      mlPredictionText = `The AgriMind ML Model specifically recommends this fertilizer action: ${mlResult.prediction}. Make sure to strongly advise the farmer to do this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
+      console.warn("ML Model returned warning/error:", mlResult?.error);
     }
   } catch (err) {
-    console.error("ML Model failed, relying only on Gemini:", err.message);
+    console.error("ML Model execution fallback to Gemini logic:", err.message);
   }
 
-  let languageInstruction = "You MUST respond in pure, standard Pakistani Urdu (Urdu Script). DO NOT use Punjabi or Sindhi words. Use local agricultural vocabulary (e.g., 'Fasal' for crop, 'Khaad' for fertilizer, 'Zameen' for soil, 'Kisan' for farmer). AVOID formal Hindi words.";
+  let languageInstruction = "You MUST respond in pure, standard Pakistani Urdu (Urdu Script). AVOID formal Hindi words or Roman script in text.";
   let greeting = "'السلام علیکم بھائی!'";
   
   if (lang === 'sd') {
-    languageInstruction = "You MUST respond in pure, standard Sindhi language (Sindhi Script). DO NOT use Urdu or Punjabi. Talk like a friendly Sindhi local advisor.";
+    languageInstruction = "You MUST respond in pure, standard Sindhi language (Sindhi Script). Talk like a warm, experienced local Sindhi agricultural expert.";
     greeting = "'اسلام عليڪم ڀاءُ!'";
   }
 
   const prompt = `
-    Act as an expert agricultural AI assistant in Pakistan.
-    CRITICAL INSTRUCTION: ${languageInstruction}
+    Act as an expert agronomist AI assistant in Pakistan specializing in Sindh soils.
+    CRITICAL LANGUAGE REQUIREMENT: ${languageInstruction}
     
-    Here is the live hardware probe data and crop context:
-    Nitrogen: ${nitrogen} mg/kg
-    Phosphorus: ${phosphorus} mg/kg
-    Potassium: ${potassium} mg/kg
-    pH: ${ph}
-    Moisture: ${moisture}%
-    GPS Location: ${location || "Unknown"}
-    Soil Sample Source: City/Tehsil: ${soilCity || "Unknown City"}, District: ${soilSource || "Mirpur Khas"}
-    Time Since Last Crop: ${restDuration || "Not Specified"}
-    Previous Crop: ${prevCrop}
-    Planned Crop: ${plannedCrop}
-    Current Weather Context: ${weatherContext}
+    HARDWARE SENSOR & CROP CONTEXT:
+    - City/Tehsil: ${city}, District: ${district}
+    - Regional Agronomy Profile: Soil Type is "${districtInfo.soilType}" (${districtInfo.characteristics})
+    - Live Probe Data: Nitrogen: ${nitrogen} mg/kg, Phosphorus: ${phosphorus} mg/kg, Potassium: ${potassium} mg/kg, pH: ${ph}, Moisture: ${moisture}%
+    - Farming Phase: ${situation}
+    - Time Since Last Crop: ${restDuration || "Not Specified"}
+    - Previous Harvested Crop: ${prevCrop}
+    - Farmer's Planned Target Crop: ${plannedCrop}
+    - Live Weather Context: ${weatherContext}
     
-    CRITICAL AGRIMIND ASSISTANT INSIGHT:
-    ${mlPredictionText}
+    AGRIMIND ML MODEL INSIGHT:
+    ${mlPredictionText || "ML prediction fallback to agronomic heuristic analysis."}
     
-    CORE COMPARATIVE LOGIC INSTRUCTION:
-    1. First, explicitly determine and state the typical soil type (e.g., sandy, loamy, clay) of the City/Tehsil "${soilCity || "Unknown City"}" in the district of "${soilSource || "Mirpur Khas"}". Base your diagnosis entirely on this specific city/tehsil's soil, ignoring the GPS Location if they differ.
-    2. You are trained on the standard ideal NPK, pH, and Moisture ranges for all crops in ${soilCity || "Unknown City"}, ${soilSource || "Mirpur Khas"}. 
+    EXPERT ANALYSIS REQUIREMENTS:
+    1. First, mention the soil context of ${city}, ${district} (${districtInfo.soilType}).
+    2. Compare the live N-P-K, pH, and Moisture against ideal target requirements for "${plannedCrop}". Detail any deficits or excesses explicitly (e.g., Nitrogen needed vs actual).
+    3. Prescribe specific fertilizer dosage or soil treatment to fix any nutrient gaps. Factor in land rest duration ("${restDuration}").
+    4. Explicitly weave in the AgriMind Assistant ML insight (${mlPredictionText}).
     
-    Provide your advice by following this STRICT structure:
-    1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${soilCity || "Unknown City"}. Then compare the live probe data against the standard ideal requirements for the farmer's "Planned Crop" (${plannedCrop}) in that exact city/tehsil. Explicitly mention the numbers. For example: "Achi Chilli ke liye N 80mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
-    2. SECOND (AgriMind ML Insight): Gently introduce the "CRITICAL AGRIMIND ASSISTANT INSIGHT" (${mlPredictionText}). Present this as a highly recommended expert option.
+    ${mlAlternativesText || 'Provide 3 to 4 recommended alternative crops in the "alternatives" array that naturally thrive in this soil condition without excessive chemical fertilizers.'}
     
-    ${mlAlternativesText || 'CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values and suggest crops that naturally thrive perfectly in these exact soil conditions without needing much extra fertilizer.'}
-    
-    Respond STRICTLY in JSON format matching this schema exactly (no markdown blocks around it):
+    OUTPUT FORMAT: Return STRICT JSON ONLY (no markdown backticks, no markdown fence):
     {
       "decision": "PROCEED" or "STOP & WAIT",
-      "diagnosisText": "An extremely warm, friendly conversational script. Start with ${greeting}. Act as the smart comparative engine explaining the exact numbers and requirements for ${plannedCrop}, prescribing specific fertilizer fixes, and mentioning the AgriMind insight. CRITICAL: DO NOT list or mention any alternative crops here! Focus ONLY on the planned crop. The alternatives will be displayed separately in the UI. IMPORTANT: Spell out the units in the requested language (e.g., write 'ملی گرام فی کلوگرام' instead of 'mg/kg'). DO NOT use English symbols. NEVER use 'Machine Learning', always use 'AgriMind Assistant'.",
-      "speechText": "The EXACT SAME script but transliterated purely into Devanagari (Hindi) script for TTS.",
-      "waitTime": "e.g., 'Plant immediately' or 'Wait 4 weeks' in the requested language.",
-      "status": "success" (if proceed) or "warning" (if stop),
+      "diagnosisText": "Friendly, detailed advice script starting with ${greeting}. Explain soil condition, NPK balance for ${plannedCrop}, precise fertilizer actions, and AgriMind Assistant insight. DO NOT list alternative crops in this text. Write numbers and units naturally in the output script (e.g. 'ملی گرام فی کلوگرام').",
+      "speechText": "The EXACT SAME script transliterated into Devanagari (Hindi) script for TTS voice synthesis.",
+      "waitTime": "Action timeline (e.g., 'Plant within 7 days' or 'Wait 3 weeks') in requested language.",
+      "status": "success" (for proceed) or "warning" (for stop),
       "alternatives": [
-        { "crop": "CropName (in requested language)", "why": "A highly detailed paragraph explaining exactly why this alternative crop is a perfect match for the CURRENT soil NPK/pH without extra fertilizer. (DO NOT put this in diagnosisText)" }
+        { "crop": "Crop Name", "why": "Detailed agronomic explanation why this crop fits current soil NPK." }
       ]
     }
   `;
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
     }
   });
 
-  let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
-  return JSON.parse(cleanText);
+  let rawText = response.text || "";
+  let cleanText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  
+  try {
+    return JSON.parse(cleanText);
+  } catch (parseErr) {
+    console.error("JSON parse retry formatting...", parseErr.message);
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw parseErr;
+  }
 };
 
 // main api route where the process starts
@@ -212,20 +250,26 @@ app.post("/api/parse-speech", async (req, res) => {
       return res.status(500).json({ error: "GEMINI_API_KEY is not set." });
     }
 
+    if (!text || typeof text !== "string" || !text.trim()) {
+      return res.json({
+        prevCrop: "None",
+        plannedCrop: "Cotton",
+        restDuration: "1 to 3 Weeks (1 se 3 Hafte)"
+      });
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
     const prompt = `
-      The following text is transcribed speech from a Pakistani farmer. The speech might be in Sindhi, Urdu, or English (Roman or Arabic script).
-      They are talking about their farming plans.
-      Extract the following 3 fields. (Translate their Sindhi/Urdu crop names into the English options below):
-      1. "prevCrop": The crop they previously harvested. Options: ["Wheat", "Cotton", "Sugarcane", "Rice", "Mango", "Banana", "Guava", "Onion", "Tomato", "Chilli", "Okra", "Brinjal", "Spinach", "Bottle gourd", "Mash", "Moong", "Masoor", "Berseem", "Lucerne", "Jowar", "Bajra", "Guar", "Moth bean", "Sunflower", "Cabbage", "Cauliflower", "Cluster beans", "Desert grasses", "Local seasonal sabzi", "Local fodder", "None"]. If not mentioned or unclear, use "None".
-      2. "plannedCrop": The crop they want to plant next. Options: same as above but excluding "None". Default to "Cotton" if unclear.
-      3. "restDuration": Approximately how much time has passed since their last crop or how long the land has been resting. Map their speech to the closest matching option below:
-         Options: ["Currently Growing (Fasal Lagi Hai)", "1 to 3 Weeks (1 se 3 Hafte)", "4 to 8 Weeks (1 se 2 Mahinay)", "3 to 5 Months (3 se 5 Mahinay)", "6+ Months / Barren (6 Mahinay se Zyada / Banjar)"]. Default to "1 to 3 Weeks (1 se 3 Hafte)" if unclear.
+      The following text is transcribed speech from a Pakistani farmer in Sindh (Urdu, Sindhi, Seraiki, or English/Roman).
+      Extract their farming context accurately:
+      1. "prevCrop": The crop previously harvested. Options: ["Wheat", "Cotton", "Sugarcane", "Rice", "Mango", "Banana", "Guava", "Onion", "Tomato", "Chilli", "Okra", "Brinjal", "Spinach", "Bottle gourd", "Mash", "Moong", "Masoor", "Berseem", "Lucerne", "Jowar", "Bajra", "Guar", "Moth bean", "Sunflower", "Cabbage", "Cauliflower", "Cluster beans", "Desert grasses", "Local seasonal sabzi", "Local fodder", "None"]. Default "None".
+      2. "plannedCrop": Next target crop. Same options as above (excluding "None"). Default "Cotton".
+      3. "restDuration": Time land has rested. Options: ["Currently Growing (Fasal Lagi Hai)", "1 to 3 Weeks (1 se 3 Hafte)", "4 to 8 Weeks (1 se 2 Mahinay)", "3 to 5 Months (3 se 5 Mahinay)", "6+ Months / Barren (6 Mahinay se Zyada / Banjar)"]. Default "1 to 3 Weeks (1 se 3 Hafte)".
       
-      Farmer's Speech: "${text}"
+      Farmer Speech Transcribe: "${text}"
       
-      Respond STRICTLY in JSON:
+      STRICT JSON ONLY:
       {
         "prevCrop": "...",
         "plannedCrop": "...",
@@ -234,15 +278,22 @@ app.post("/api/parse-speech", async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite', // using flash-lite to avoid 503 downtime
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
       }
     });
 
-    let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
-    res.json(JSON.parse(cleanText));
+    let rawText = response.text || "";
+    let cleanText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    try {
+      res.json(JSON.parse(cleanText));
+    } catch (parseErr) {
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (match) res.json(JSON.parse(match[0]));
+      else throw parseErr;
+    }
   } catch (err) {
     console.error("❌ Speech Parsing Error:", err);
     res.status(500).json({ error: "Failed to parse speech." });
@@ -263,41 +314,40 @@ app.post("/api/crop-doctor", async (req, res) => {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
-    // Prepare all uploaded images for Gemini
     const imageParts = imagesBase64.map(imgBase64 => {
+      const parts = imgBase64.split(";base64,");
+      const mimeType = parts[0].replace("data:", "") || "image/jpeg";
+      const base64Data = parts[1] || imgBase64;
       return {
         inlineData: {
-          data: imgBase64.split(",")[1],
-          mimeType: imgBase64.split(";")[0].split(":")[1]
+          data: base64Data,
+          mimeType: mimeType
         }
       };
     });
 
-    let languageInstruction = "You MUST use simple, everyday standard Pakistani Urdu. DO NOT use Punjabi or Sindhi words. AVOID pure Hindi words. Provide all textual information to the farmer in proper Urdu script (Urdu font).";
+    let languageInstruction = "Use clear Pakistani Urdu script (Urdu font). AVOID formal Hindi or Roman Urdu.";
     if (lang === 'sd') {
-      languageInstruction = "You MUST use pure, standard Sindhi language (Sindhi Script). Provide all textual information to the farmer in proper Sindhi script.";
+      languageInstruction = "Use clear Sindhi script (Sindhi font). Speak like an experienced Sindhi agronomist.";
     }
 
     const prompt = `
-      Act as an expert plant pathologist and agronomist in Pakistan.
-      I have provided one or more images of crops or leaves.
-      MOST LIKELY, these are different angles or different leaves of the EXACT SAME plant to help you make a more accurate diagnosis.
-      Analyze ALL provided images together to form a highly accurate, single combined conclusion about the plant's health.
-      Detect any diseases, pests, or nutrient deficiencies visible across the images.
-      (However, if you notice the images are clearly of completely different plants, identify each of them and their respective diseases).
-      Provide a comprehensive, combined diagnosis and solution (pesticide/organic treatment) covering the issues found.
+      Act as an expert plant pathologist and agronomist for Sindh agriculture.
+      Examine the uploaded leaf / plant image(s).
+      Detect any plant disease, insect pest damage (e.g., Whitefly, Aphids, Thrips, Leaf Miner), or nutrient deficiency (Chlorosis, Necrosis).
       
-      CRITICAL INSTRUCTION 1: ${languageInstruction}
-      CRITICAL INSTRUCTION 2: If the images are too blurry, too dark, or do NOT show any recognizable plant or crop, DO NOT guess or assume anything. Set "isValidImage" to false.
-
-      Respond STRICTLY with valid JSON.
-      Format:
+      REQUIREMENTS:
+      1. ${languageInstruction}
+      2. If the image is NOT a crop/plant, or is completely dark/unreadable, set "isValidImage": false and specify the warning.
+      3. For valid images, prescribe both an organic remedy (e.g., neem oil spray, wood ash) and local chemical treatment (e.g., Imidacloprid, Copper Oxychloride, Sulphur spray) readily accessible in Sindh markets.
+      
+      STRICT JSON ONLY:
       {
-        "isValidImage": true or false,
-        "diseaseName": "Names of the crops and their diseases in requested language (e.g. 'Mango: Healthy, Cotton: Leaf Curl'). Leave empty if isValidImage is false.",
-        "diagnosis": "Detailed explanation covering all uploaded images in requested language. If isValidImage is false, put the warning message here explaining why (e.g. 'This is not a plant' or 'The image is too blurry, please upload a clearer one').",
-        "treatment": "Actionable treatments for all identified issues in requested language. Leave empty if isValidImage is false.",
-        "speechText": "The EXACT SAME diagnosis and treatment but transliterated into Devanagari (Hindi) script for TTS."
+        "isValidImage": true,
+        "diseaseName": "Crop Name & Identified Disease/Pest in requested language",
+        "diagnosis": "Comprehensive symptom breakdown in requested language",
+        "treatment": "Practical, step-by-step organic & chemical treatments in requested language",
+        "speechText": "Identical diagnosis and treatment script transliterated into Devanagari (Hindi) script for TTS synthesis."
       }
     `;
 
@@ -317,8 +367,15 @@ app.post("/api/crop-doctor", async (req, res) => {
       }
     });
 
-    let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
-    res.json(JSON.parse(cleanText));
+    let rawText = response.text || "";
+    let cleanText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    try {
+      res.json(JSON.parse(cleanText));
+    } catch (parseErr) {
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (match) res.json(JSON.parse(match[0]));
+      else throw parseErr;
+    }
   } catch (err) {
     console.error("❌ Crop Doctor Error:", err);
     res.status(500).json({ error: "Failed to analyze image." });
