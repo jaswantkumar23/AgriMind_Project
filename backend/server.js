@@ -12,8 +12,8 @@ app.use(express.json());
 // connecting to mongodb database
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("🚀 Mubarak ho! MongoDB Atlas se connection ho gaya"))
-  .catch((err) => console.log("❌ DB Connection Error:", err));
+  .then(() => console.log("MongoDB connected Successsfully"))
+  .catch((err) => console.log("MongoDB connection error",err));
 
 // making db schema to save history
 const soilTestSchema = new mongoose.Schema({
@@ -35,90 +35,12 @@ const SoilTest = mongoose.model("SoilTest", soilTestSchema);
 
 const { GoogleGenAI } = require("@google/genai");
 
-// ============================================================
-// PHASE 1.2: District-to-Soil-Type mapping (matches training data)
-// ============================================================
-const DISTRICT_SOIL_MAP = {
-  "Mirpur Khas": "Clay Loam",
-  "Umerkot": "Sandy Loam",
-  "Tharparkar": "Sandy"
-};
-
-// ============================================================
-// PHASE 1.3: Full agricultural knowledge base (from generate_soil_data.py)
-// These are the EXACT research-backed ideal ranges for each crop per district.
-// Gemini will compare the farmer's live probe data against these real values
-// instead of hallucinating ranges from its general training.
-// ============================================================
-const DISTRICT_CROP_DATA = {
-  "Mirpur Khas": {
-    soilType: "Clay Loam / Alluvial",
-    description: "Fertile alluvial plains, canal-irrigated, high agricultural potential",
-    crops: {
-      "Cotton":    { N: [120, 145], P: [45, 58],  K: [175, 225], pH: [6.8, 7.5], Moisture: [45, 62] },
-      "Wheat":     { N: [100, 125], P: [40, 52],  K: [115, 155], pH: [6.5, 7.5], Moisture: [40, 56] },
-      "Sugarcane": { N: [175, 225], P: [60, 82],  K: [195, 280], pH: [6.5, 7.5], Moisture: [65, 82] },
-      "Mango":     { N: [110, 135], P: [48, 65],  K: [155, 205], pH: [5.8, 7.0], Moisture: [35, 52] },
-      "Banana":    { N: [165, 205], P: [68, 92],  K: [215, 285], pH: [6.0, 7.0], Moisture: [70, 86] },
-      "Chilli":    { N: [98, 125],  P: [50, 67],  K: [128, 172], pH: [6.0, 7.0], Moisture: [48, 65] },
-      "Rice":      { N: [118, 145], P: [44, 62],  K: [108, 145], pH: [5.5, 6.5], Moisture: [80, 96] },
-      "Tomato":    { N: [108, 132], P: [55, 72],  K: [158, 205], pH: [6.0, 7.0], Moisture: [55, 70] },
-      "Onion":     { N: [108, 132], P: [50, 66],  K: [158, 202], pH: [6.2, 7.0], Moisture: [50, 65] },
-      "Guava":     { N: [88, 112],  P: [38, 56],  K: [118, 162], pH: [5.5, 7.0], Moisture: [38, 55] }
-    }
-  },
-  "Umerkot": {
-    soilType: "Sandy Loam",
-    description: "Semi-arid zone, mixed soils, partially canal-irrigated",
-    crops: {
-      "Cotton":    { N: [108, 132], P: [38, 52],  K: [155, 205], pH: [7.0, 7.8], Moisture: [38, 55] },
-      "Wheat":     { N: [88, 112],  P: [32, 46],  K: [98, 132],  pH: [6.8, 7.6], Moisture: [35, 50] },
-      "Bajra":     { N: [78, 102],  P: [28, 44],  K: [78, 122],  pH: [6.5, 8.0], Moisture: [20, 42] },
-      "Guar":      { N: [22, 40],   P: [44, 62],  K: [48, 72],   pH: [7.0, 8.5], Moisture: [18, 36] },
-      "Moth bean": { N: [18, 35],   P: [32, 50],  K: [38, 62],   pH: [7.0, 8.2], Moisture: [15, 32] },
-      "Onion":     { N: [98, 122],  P: [44, 62],  K: [148, 182], pH: [6.5, 7.2], Moisture: [48, 64] },
-      "Chilli":    { N: [88, 112],  P: [44, 62],  K: [118, 158], pH: [6.5, 7.5], Moisture: [44, 60] },
-      "Sunflower": { N: [82, 112],  P: [38, 55],  K: [108, 152], pH: [6.5, 7.5], Moisture: [38, 55] },
-      "Jowar":     { N: [78, 108],  P: [28, 44],  K: [58, 92],   pH: [6.5, 8.0], Moisture: [22, 45] }
-    }
-  },
-  "Tharparkar": {
-    soilType: "Sandy / Desert Sand",
-    description: "Arid desert zone, rain-fed farming, low organic matter soils",
-    crops: {
-      "Bajra":          { N: [55, 80],  P: [18, 35], K: [48, 82],   pH: [7.5, 8.5], Moisture: [10, 28] },
-      "Guar":           { N: [12, 28],  P: [28, 45], K: [32, 55],   pH: [7.5, 9.0], Moisture: [10, 22] },
-      "Moth bean":      { N: [12, 28],  P: [22, 38], K: [28, 50],   pH: [7.5, 8.8], Moisture: [8, 22] },
-      "Jowar":          { N: [52, 78],  P: [18, 35], K: [38, 68],   pH: [7.0, 8.5], Moisture: [10, 28] },
-      "Dates":          { N: [88, 122], P: [52, 75], K: [98, 145],  pH: [7.5, 8.5], Moisture: [8, 22] },
-      "Desert grasses": { N: [8, 22],   P: [8, 20],  K: [18, 35],   pH: [7.5, 9.2], Moisture: [4, 16] },
-      "Wheat":          { N: [68, 92],  P: [22, 40], K: [78, 112],  pH: [7.0, 8.2], Moisture: [28, 45] }
-    }
-  }
-};
-
-// ============================================================
-// PHASE 1.4: Input validation helper
-// Clamps sensor values to realistic agricultural ranges
-// ============================================================
-const validateAndClampInputs = (data) => {
-  const clamp = (val, min, max) => Math.max(min, Math.min(max, Number(val) || 0));
-  return {
-    ...data,
-    nitrogen: clamp(data.nitrogen, 0, 320),
-    phosphorus: clamp(data.phosphorus, 0, 160),
-    potassium: clamp(data.potassium, 0, 420),
-    ph: clamp(data.ph, 4.5, 9.5),
-    moisture: clamp(data.moisture, 0, 100)
-  };
-};
-
 // function to run my python ML model
 const runMLModel = (inputData) => {
   return new Promise((resolve, reject) => {
     const { spawn } = require('child_process');
     // Using default python, user can override via .env
-    const pythonCmd = process.env.PYTHON_CMD || 'python';
+    const pythonCmd = process.env.PYTHON_CMD || 'C:/Users/KS Technologies/AppData/Local/Programs/Python/Python311/python.exe';
     
     const pythonProcess = spawn(pythonCmd, ['predict_ml.py']);
     
@@ -149,81 +71,26 @@ const runMLModel = (inputData) => {
   });
 };
 
-// retry helper: retries on 503 with exponential backoff, falls back to other models
-const GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-
-const is503Error = (err) => {
-  // handles all possible ways the 503 can appear in the google genai sdk
-  if (!err) return false;
-  if (err.status === 503) return true;
-  if (typeof err.status === 'string' && err.status === '503') return true;
-  if (err.message && err.message.includes('503')) return true;
-  if (err.message && err.message.toLowerCase().includes('unavailable')) return true;
-  if (err.message && err.message.toLowerCase().includes('high demand')) return true;
-  try {
-    const parsed = JSON.parse(err.message);
-    if (parsed?.error?.code === 503) return true;
-    if (parsed?.error?.status === 'UNAVAILABLE') return true;
-  } catch (_) {}
-  return false;
-};
-
-const generateWithRetry = async (ai, contents, config = {}, maxRetries = 4) => {
-  for (let modelIndex = 0; modelIndex < GEMINI_MODELS.length; modelIndex++) {
-    const model = GEMINI_MODELS[modelIndex];
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`🔄 Trying model: ${model} (attempt ${attempt}/${maxRetries})`);
-        const response = await ai.models.generateContent({ model, contents, config });
-        console.log(`✅ Success with model: ${model}`);
-        return response;
-      } catch (err) {
-        const busy = is503Error(err);
-        const isLastAttempt = attempt === maxRetries;
-        const isLastModel = modelIndex === GEMINI_MODELS.length - 1;
-
-        if (busy && !isLastAttempt) {
-          const delay = Math.pow(2, attempt) * 1500; // 3s, 6s, 12s, 24s
-          console.warn(`⚠️ Model ${model} is busy. Retrying in ${delay / 1000}s... [attempt ${attempt}/${maxRetries}]`);
-          await new Promise(r => setTimeout(r, delay));
-        } else if (busy && isLastAttempt && !isLastModel) {
-          console.warn(`⚠️ Model ${model} exhausted all retries. Switching to next model...`);
-          break; // try next model
-        } else if (busy && isLastAttempt && isLastModel) {
-          throw new Error('All Gemini models are currently busy. Please try again in a few minutes.');
-        } else {
-          throw err; // non-503 error — bubble up immediately
-        }
-      }
-    }
-  }
-  throw new Error('All Gemini models are currently busy. Please try again in a few minutes.');
-};
-
 // main brain of the app using AI and ML
 const generateAIDiagnosis = async (data) => {
-  // PHASE 1.4: Validate and clamp inputs before processing
-  data = validateAndClampInputs(data);
-  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang } = data;
-
-  // Default district
-  const district = soilSource || location || "Mirpur Khas";
+  let { nitrogen, phosphorus, potassium, ph, moisture, location, soilSource, soilCity, lat, lng, restDuration, prevCrop, plannedCrop, stage, lang, testingPhase } = data;
 
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set in backend .env");
   }
-
-  // PHASE 1.1: Use farmer's actual GPS for weather (fallback to Mirpur Khas center)
+  // calling weather api for live data based on soilSource
   let weatherContext = "Weather data unavailable.";
+  let wLat = 25.396; let wLng = 68.3578; // Default Mirpur Khas roughly
+  if (soilSource === "Mirpur Khas") { wLat = 25.5251; wLng = 69.0159; }
+  else if (soilSource === "Umerkot") { wLat = 25.3615; wLng = 69.7362; }
+  else if (soilSource === "Tharparkar") { wLat = 24.7977; wLng = 69.8058; }
+  
   try {
-    const weatherLat = lat || 25.396;
-    const weatherLng = lng || 68.3578;
-    console.log(`🌤️ Fetching weather for GPS: ${weatherLat}, ${weatherLng}`);
-    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLng}&current_weather=true`);
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${wLat}&longitude=${wLng}&current_weather=true`);
     const weatherData = await weatherRes.json();
     if (weatherData && weatherData.current_weather) {
       const { temperature, windspeed } = weatherData.current_weather;
-      weatherContext = `Current Temperature: ${temperature}°C, Wind Speed: ${windspeed} km/h (measured at farmer's actual location: ${weatherLat.toFixed(3)}, ${weatherLng.toFixed(3)})`;
+      weatherContext = `Current Temperature in ${soilSource}: ${temperature}°C, Wind Speed: ${windspeed} km/h`;
     }
   } catch (err) {
     console.error("Weather fetch error:", err);
@@ -231,28 +98,30 @@ const generateAIDiagnosis = async (data) => {
 
   // calling python for prediction
   let mlPredictionText = "";
-  let situation = restDuration && restDuration.includes("Currently Growing") ? "Growth" : "Pre-Sowing";
+  let mlAlternativesText = "";
+  let situation = testingPhase || "Pre-Sowing";
   
   try {
-    // PHASE 1.2: Include correct Soil_Type from district mapping
     const mlInput = {
       situation: situation,
-      District: district,
-      Soil_Type: DISTRICT_SOIL_MAP[district] || "Loamy",
+      District: soilSource || location || "Mirpur Khas",
       N: nitrogen, P: phosphorus, K: potassium, pH: ph, Moisture: moisture,
       Previous_Crop: prevCrop || "None",
       Current_Crop: plannedCrop || "Cotton",
       Stage: stage || "Vegetative"
     };
     
-    console.log("🤖 Running ML Model with Soil_Type:", mlInput.Soil_Type);
+    console.log("🤖 Running ML Model...");
     const mlResult = await runMLModel(mlInput);
     console.log("🤖 ML Result:", mlResult);
     
     if (mlResult.type === "crop_recommendation") {
-      mlPredictionText = `The AgriMind Assistant specifically recommends planting: ${mlResult.prediction}. Make sure to include this in your diagnosis and say "AgriMind Assistant ne mashwara diya hai"!`;
+      mlPredictionText = `The AgriMind ML Model mathematically predicts the #1 best crop is: ${mlResult.prediction}. Make sure to strongly recommend this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
+      if (mlResult.alternatives && mlResult.alternatives.length > 0) {
+        mlAlternativesText = `CRITICAL: The ML model strictly selected these alternative crops based on probability: ${mlResult.alternatives.join(", ")}. You MUST ONLY use these exact crops in the 'alternatives' array and explain why they match the current NPK perfectly.`;
+      }
     } else {
-      mlPredictionText = `The AgriMind Assistant specifically recommends this fertilizer action: ${mlResult.prediction}. Make sure to strongly advise the farmer to do this and say "AgriMind Assistant ne mashwara diya hai"!`;
+      mlPredictionText = `The AgriMind ML Model specifically recommends this fertilizer action: ${mlResult.prediction}. Make sure to strongly advise the farmer to do this and explicitly state that this is the recommendation of the "AgriMind Assistant". Speak this naturally in the requested language script (do NOT use Roman Urdu).`;
     }
   } catch (err) {
     console.error("ML Model failed, relying only on Gemini:", err.message);
@@ -266,18 +135,6 @@ const generateAIDiagnosis = async (data) => {
     greeting = "'اسلام عليڪم ڀاءُ!'";
   }
 
-  // PHASE 1.3: Build the knowledge base reference table for this district
-  const districtData = DISTRICT_CROP_DATA[district] || DISTRICT_CROP_DATA["Mirpur Khas"];
-  let knowledgeBaseText = `\n=== VERIFIED AGRONOMIC REFERENCE DATA FOR ${district.toUpperCase()} ===\n`;
-  knowledgeBaseText += `District Soil Type: ${districtData.soilType}\n`;
-  knowledgeBaseText += `District Profile: ${districtData.description}\n\n`;
-  knowledgeBaseText += `IDEAL RANGES FOR ALL CROPS IN ${district.toUpperCase()} (use THESE numbers, do NOT guess):\n`;
-  
-  for (const [cropName, ranges] of Object.entries(districtData.crops)) {
-    knowledgeBaseText += `  ${cropName}: N=[${ranges.N[0]}-${ranges.N[1]}] mg/kg, P=[${ranges.P[0]}-${ranges.P[1]}] mg/kg, K=[${ranges.K[0]}-${ranges.K[1]}] mg/kg, pH=[${ranges.pH[0]}-${ranges.pH[1]}], Moisture=[${ranges.Moisture[0]}-${ranges.Moisture[1]}]%\n`;
-  }
-  knowledgeBaseText += `=== END OF REFERENCE DATA ===\n`;
-
   const prompt = `
     Act as an expert agricultural AI assistant in Pakistan.
     CRITICAL INSTRUCTION: ${languageInstruction}
@@ -289,7 +146,7 @@ const generateAIDiagnosis = async (data) => {
     pH: ${ph}
     Moisture: ${moisture}%
     GPS Location: ${location || "Unknown"}
-    Soil Sample Source: ${district}
+    Soil Sample Source: City/Tehsil: ${soilCity || "Unknown City"}, District: ${soilSource || "Mirpur Khas"}
     Time Since Last Crop: ${restDuration || "Not Specified"}
     Previous Crop: ${prevCrop}
     Planned Crop: ${plannedCrop}
@@ -298,33 +155,37 @@ const generateAIDiagnosis = async (data) => {
     CRITICAL AGRIMIND ASSISTANT INSIGHT:
     ${mlPredictionText}
     
-    ${knowledgeBaseText}
-    
     CORE COMPARATIVE LOGIC INSTRUCTION:
-    1. First, explicitly state the soil type of "${district}" which is "${districtData.soilType}" (DO NOT guess, use the reference data above). Base your diagnosis entirely on this soil source, ignoring the GPS Location if they differ.
-    2. Use ONLY the "VERIFIED AGRONOMIC REFERENCE DATA" table above to determine ideal NPK, pH, and Moisture ranges for each crop. DO NOT use any other source or general knowledge. Compare the farmer's LIVE probe readings against the EXACT ideal ranges listed above.
+    1. First, explicitly determine and state the typical soil type (e.g., sandy, loamy, clay) of the City/Tehsil "${soilCity || "Unknown City"}" in the district of "${soilSource || "Mirpur Khas"}". Base your diagnosis entirely on this specific city/tehsil's soil, ignoring the GPS Location if they differ.
+    2. You are trained on the standard ideal NPK, pH, and Moisture ranges for all crops in ${soilCity || "Unknown City"}, ${soilSource || "Mirpur Khas"}. 
     
     Provide your advice by following this STRICT structure:
-    1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${district} ("${districtData.soilType}"). Then compare the live probe data against the ideal requirements for "${plannedCrop}" from the reference data above. Explicitly mention BOTH the farmer's actual reading AND the ideal range. For example: "Achi Chilli ke liye N 98-125 mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai — yeh bahut kam hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
+    1. FIRST (Compare Planned Crop): Start by mentioning the soil type of ${soilCity || "Unknown City"}. Then compare the live probe data against the standard ideal requirements for the farmer's "Planned Crop" (${plannedCrop}) in that exact city/tehsil. Explicitly mention the numbers. For example: "Achi Chilli ke liye N 80mg/kg chahiye jabke aap ki zameen mein 40mg/kg hai." If there is a deficiency or imbalance, prescribe the EXACT fertilizer to fix it. Factor in the "Time Since Last Crop" (${restDuration}).
     2. SECOND (AgriMind ML Insight): Gently introduce the "CRITICAL AGRIMIND ASSISTANT INSIGHT" (${mlPredictionText}). Present this as a highly recommended expert option.
     
-    CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values (N=${nitrogen}, P=${phosphorus}, K=${potassium}, pH=${ph}, Moisture=${moisture}%) and use the reference data table to find crops whose ideal ranges best match these current values WITHOUT needing much extra fertilizer. Put the AgriMind Assistant's recommended crop here too if it fits.
+    ${mlAlternativesText || 'CRITICAL INSTRUCTION: You MUST ALWAYS provide 3 to 4 "Top Priority Alternative Crops" in the "alternatives" array. Look at the CURRENT probe values and suggest crops that naturally thrive perfectly in these exact soil conditions without needing much extra fertilizer.'}
     
     Respond STRICTLY in JSON format matching this schema exactly (no markdown blocks around it):
     {
       "decision": "PROCEED" or "STOP & WAIT",
-      "diagnosisText": "An extremely warm, friendly conversational script. Start with ${greeting}. Act as the smart comparative engine explaining the exact numbers and requirements for ${plannedCrop}, prescribing specific fertilizer fixes, and mentioning the AgriMind insight. IMPORTANT: Spell out the units in the requested language (e.g., write 'ملی گرام فی کلوگرام' instead of 'mg/kg'). DO NOT use English symbols. NEVER use 'Machine Learning', always use 'AgriMind Assistant'.",
+      "diagnosisText": "An extremely warm, friendly conversational script. Start with ${greeting}. Act as the smart comparative engine explaining the exact numbers and requirements for ${plannedCrop}, prescribing specific fertilizer fixes, and mentioning the AgriMind insight. CRITICAL: DO NOT list or mention any alternative crops here! Focus ONLY on the planned crop. The alternatives will be displayed separately in the UI. IMPORTANT: Spell out the units in the requested language (e.g., write 'ملی گرام فی کلوگرام' instead of 'mg/kg'). DO NOT use English symbols. NEVER use 'Machine Learning', always use 'AgriMind Assistant'.",
       "speechText": "The EXACT SAME script but transliterated purely into Devanagari (Hindi) script for TTS.",
       "waitTime": "e.g., 'Plant immediately' or 'Wait 4 weeks' in the requested language.",
       "status": "success" (if proceed) or "warning" (if stop),
       "alternatives": [
-        { "crop": "CropName (in requested language)", "why": "A highly detailed paragraph explaining exactly why this alternative crop is a perfect match for the CURRENT soil NPK/pH without extra fertilizer. Reference the specific ideal ranges from the reference data." }
+        { "crop": "CropName (in requested language)", "why": "A highly detailed paragraph explaining exactly why this alternative crop is a perfect match for the CURRENT soil NPK/pH without extra fertilizer. (DO NOT put this in diagnosisText)" }
       ]
     }
   `;
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await generateWithRetry(ai, prompt, { responseMimeType: "application/json" });
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-lite',
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+    }
+  });
 
   let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
   return JSON.parse(cleanText);
@@ -372,7 +233,13 @@ app.post("/api/parse-speech", async (req, res) => {
       }
     `;
 
-    const response = await generateWithRetry(ai, prompt, { responseMimeType: "application/json" });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-lite', // using flash-lite to avoid 503 downtime
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
 
     let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
     res.json(JSON.parse(cleanText));
@@ -434,10 +301,21 @@ app.post("/api/crop-doctor", async (req, res) => {
       }
     `;
 
-    const response = await generateWithRetry(ai,
-      [{ role: "user", parts: [{ text: prompt }, ...imageParts] }],
-      { responseMimeType: "application/json" }
-    );
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            ...imageParts
+          ]
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
 
     let cleanText = response.text.replace(/```json/g, "").replace(/```/g, "").trim();
     res.json(JSON.parse(cleanText));

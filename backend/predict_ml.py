@@ -3,7 +3,6 @@ import json
 import pickle
 import pandas as pd
 import warnings
-import os
 warnings.filterwarnings('ignore')
 
 def main():
@@ -14,11 +13,8 @@ def main():
         
         situation = data.get('situation', 'Pre-Sowing') # 'Pre-Sowing' or 'Growth'
         
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        models_dir = os.path.join(base_dir, '..', 'models')
-        
         if situation == 'Pre-Sowing':
-            with open(os.path.join(models_dir, 'model1_presowing.pkl'), 'rb') as f:
+            with open('d:/AgriMind_Project/models/model1_presowing.pkl', 'rb') as f:
                 model_data = pickle.load(f)
                 model = model_data['model']
                 encoders = model_data['encoders']
@@ -43,11 +39,24 @@ def main():
                     # Fallback to the first class if unknown
                     df[col] = encoders[col].transform([encoders[col].classes_[0]])
                     
-            pred = model.predict(df)[0]
-            result = {"prediction": pred, "type": "crop_recommendation"}
+            pred_probs = model.predict_proba(df)[0]
+            classes = model.classes_
+            
+            # Combine classes and probabilities
+            class_probs = list(zip(classes, pred_probs))
+            # Sort by probability descending
+            class_probs.sort(key=lambda x: x[1], reverse=True)
+            
+            # Top 1 prediction
+            pred = class_probs[0][0]
+            
+            # Next 3 alternatives
+            alternatives = [c[0] for c in class_probs[1:4]]
+            
+            result = {"prediction": pred, "alternatives": alternatives, "type": "crop_recommendation"}
             
         else: # Growth Phase
-            with open(os.path.join(models_dir, 'model2_growth.pkl'), 'rb') as f:
+            with open('d:/AgriMind_Project/models/model2_growth.pkl', 'rb') as f:
                 model_data = pickle.load(f)
                 model = model_data['model']
                 encoders = model_data['encoders']

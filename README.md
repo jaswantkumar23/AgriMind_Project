@@ -176,10 +176,10 @@ AgriMind_Project/
 |
 +-- frontend/                     # React + Vite frontend
 |   +-- src/
-|   |   +-- App.jsx               # Main React app - all UI tabs and logic
+|   |   +-- App.js                # Main React app - all UI tabs and logic
 |   |   +-- App.css               # Custom CSS styles
 |   |   +-- index.css             # Tailwind CSS directives
-|   |   +-- main.jsx              # Vite entry point
+|   |   +-- index.js              # React DOM entry point
 |   +-- vite.config.js            # Vite config - dev server + /api proxy
 |   +-- tailwind.config.js        # Tailwind with custom agri-green color
 |   +-- index.html                # Root HTML
@@ -278,7 +278,7 @@ npm start
 You should see:
 ```
 📡 Server is running on port: 5000
-🚀 Mubarak ho! MongoDB Atlas se connection ho gaya
+ MongoDB connected Successsfully
 ```
 
 ### Terminal 2 — Start the Frontend
