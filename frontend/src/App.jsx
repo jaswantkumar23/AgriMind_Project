@@ -136,6 +136,89 @@ const cityDict = {
   }
 };
 
+const soilGuideDb = {
+  "Cotton": {
+    N: [90, 120], P: [30, 50], K: [150, 250], pH: [6.0, 7.5], Moisture: [25, 45],
+    tips: {
+      en: "Nitrogen: Use Urea if N is low. Add organic manure. Phosphorus: Use DAP. Potassium: Use MOP. pH: Add gypsum for alkaline soil, lime for acidic soil.",
+      ur: "نائٹروجن: نائٹروجن کم ہو تو یوریا ڈالیں۔ فاسفورس: ڈی اے پی (DAP) کا استعمال کریں۔ پوٹاشیم: ایم او پی (MOP) ڈالیں۔ پی ایچ: اگر پی ایچ زیادہ ہو تو جپسم ڈالیں۔",
+      sd: "نائٽروجن: نائٽروجن گھٽ ھجي ته يوريا وجھو. فاسفورس: ڊي اي پي (DAP) وجھو. پوٽاشيم: ايم او پي (MOP) وجھو. پي ايڇ: جيڪڏھن پي ايڇ وڌيڪ ھجي ته جپسم وجھو."
+    }
+  },
+  "Wheat": {
+    N: [80, 110], P: [25, 45], K: [120, 200], pH: [6.0, 8.0], Moisture: [20, 40],
+    tips: {
+      en: "Nitrogen: Apply urea during first watering. Phosphorus: Mix DAP during soil preparation. pH: Keep pH neutral for maximum yield.",
+      ur: "نائٹروجن: پہلے پانی کے ساتھ یوریا دیں۔ فاسفورس: بوائی کے وقت ڈی اے پی ملا دیں۔ پی ایچ: بہتر پیداوار کے لیے پی ایچ کو متوازن رکھیں۔",
+      sd: "نائٽروجن: پھرين پاڻي سان يوريا ڏيو. فاسفورس: پوکڻ وقت ڊي اي پي ملايو. پي ايڇ: بھتر پيداوار لاءِ پي ايڇ کي متوازن رکو."
+    }
+  },
+  "Sugarcane": {
+    N: [120, 160], P: [40, 70], K: [180, 300], pH: [6.5, 7.8], Moisture: [35, 60],
+    tips: {
+      en: "Sugarcane needs high moisture and nitrogen. Use compost liberally. Maintain drainage.",
+      ur: "گنے کو زیادہ پانی اور نائٹروجن کی ضرورت ہوتی ہے۔ گوبر کی کھاد زیادہ استعمال کریں اور پانی کا نکاس بہتر رکھیں۔",
+      sd: "ڪماند کي وڌيڪ پاڻي ۽ نائٽروجن جي ضرورت ھوندي آھي. ڇاڻيل ڀاڻ جو وڌيڪ استعمال ڪريو."
+    }
+  },
+  "Mango": {
+    N: [70, 100], P: [20, 40], K: [100, 180], pH: [5.5, 7.5], Moisture: [15, 30],
+    tips: {
+      en: "Mango trees prefer slightly acidic to neutral loamy soil. Water deeply but infrequently.",
+      ur: "آم کے درختوں کے لیے ہلکی تیزابی یا متوازن مٹی بہتر ہے۔ گہرا لیکن وقفے وقفے سے پانی دیں۔",
+      sd: "انب جي وڻن لاءِ ھلڪي تيزابي مٽي بھتر آھي. اونهو پر وقفي وقفي سان پاڻي ڏيو."
+    }
+  },
+  "Banana": {
+    N: [110, 150], P: [30, 60], K: [200, 350], pH: [6.0, 7.5], Moisture: [40, 65],
+    tips: {
+      en: "Bananas are heavy feeders. Need high Potassium (K) and constant moisture.",
+      ur: "کیلے کو زیادہ پوٹاشیم اور مسلسل نمی کی ضرورت ہوتی ہے۔ پتوں کی کھاد کا استعمال کریں۔",
+      sd: "ڪيلن کي وڌيڪ پوٽاشيم ۽ مسلسل نمي جي ضرورت ھوندي آھي."
+    }
+  },
+  "Chilli": {
+    N: [80, 120], P: [30, 50], K: [120, 200], pH: [6.0, 7.0], Moisture: [20, 35],
+    tips: {
+      en: "Chilli needs good drainage to prevent root rot. Keep Nitrogen moderate.",
+      ur: "مرچ کے لیے پانی کا نکاس بہتر رکھیں تاکہ جڑیں نہ سڑیں۔ نائٹروجن کو اعتدال میں رکھیں۔",
+      sd: "مرچن لاءِ پاڻي جو نيڪال بھتر رکو ته جيئن پاڙون نه سڙن."
+    }
+  },
+  "Rice": {
+    N: [90, 130], P: [30, 60], K: [120, 220], pH: [5.5, 7.0], Moisture: [50, 80],
+    tips: {
+      en: "Rice requires flooded or very high moisture conditions. Maintain high moisture during growth.",
+      ur: "چاول کی فصل کو کھڑے پانی اور زیادہ نمی کی ضرورت ہوتی ہے۔ بڑھوتری کے دوران نمی برقرار رکھیں۔",
+      sd: "چانورن جي فصل کي بيھل پاڻي ۽ وڌيڪ نمي جي ضرورت ھوندي آھي."
+    }
+  },
+  "Tomato": {
+    N: [80, 110], P: [25, 45], K: [150, 240], pH: [6.0, 6.8], Moisture: [25, 40],
+    tips: {
+      en: "Tomatoes need Calcium to prevent blossom end rot. Keep moisture consistent.",
+      ur: "ٹماٹر کے لیے کیلشیم ضروری ہے تاکہ پھل خراب نہ ہو۔ نمی کو یکساں رکھیں۔",
+      sd: "ٽماٽن لاءِ ڪلسيم ضروري آھي ته جيئن ڦر خراب نه ٿئي."
+    }
+  },
+  "Onion": {
+    N: [70, 100], P: [30, 50], K: [100, 180], pH: [6.0, 7.5], Moisture: [20, 35],
+    tips: {
+      en: "Onions have shallow roots. Apply light waterings. Phosphorus is vital for bulb size.",
+      ur: "پیاز کی جڑیں گہری نہیں ہوتیں۔ ہلکا پانی دیں۔ فاسفورس پیاز کا سائز بڑھانے کے لیے اہم ہے۔",
+      sd: "بصر جي پاڙ اونهي نه ھوندي آھي. ھلڪو پاڻي ڏيو. فاسفورس بصر جي سائيز وڌائڻ لاءِ ضروري آھي."
+    }
+  },
+  "Guava": {
+    N: [60, 90], P: [20, 40], K: [90, 150], pH: [5.0, 8.2], Moisture: [15, 30],
+    tips: {
+      en: "Guava can tolerate a wide pH range. Avoid waterlogging around root zone.",
+      ur: "امرود وسیع پی ایچ رینج برداشت کر سکتا ہے۔ جڑوں کے پاس پانی جمع نہ ہونے دیں۔",
+      sd: "زيتون وسيع پي ايڇ رينج برداشت ڪري سگھي ٿو. پاڙن وٽ پاڻي گڏ ٿيڻ نه ڏيو."
+    }
+  }
+};
+
 const initialFormData = {
   nitrogen: "", phosphorus: "", potassium: "", ph: "", moisture: "", location: "", soilSource: "Mirpur Khas", soilCity: "Mirpur Khas",
   prevCrop: "None", restDuration: "1 to 3 Weeks (1 se 3 Hafte)", plannedCrop: "Cotton", 
@@ -158,6 +241,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
 
   const [activeTab, setActiveTab] = useState('soil');
+  const [selectedGuideCrop, setSelectedGuideCrop] = useState('Cotton');
   const [doctorImages, setDoctorImages] = useState([]); // array to store multiple images
   const [doctorResult, setDoctorResult] = useState(null);
   const [doctorLoading, setDoctorLoading] = useState(false);
