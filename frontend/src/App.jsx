@@ -509,7 +509,6 @@ function App() {
                    ];
 
                    return (
-                    
                       <div className="space-y-4 mb-6">
                         <div className="flex bg-green-50/50 p-1.5 rounded-full mb-6 border border-green-100 shadow-inner">
                           <button 
